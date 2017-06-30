@@ -242,9 +242,7 @@ if __name__ == '__main__':
             aggregation_size=1, #should it change?
             sampling_function=collecting_all_metric
         )
-
-        edge_component = TensorFlowEdgeComponent(r"C:\Users\kiit\Documents\IoT\liota-edge_intelligence\
-                                                edge_intelligence_models\saved-windmill-model\frozen_model.pb",actuator_udm=action_actuator)
+        edge_component = TensorFlowEdgeComponent("C:/Users/kiit/Documents/IoT/liota-edge_intelligence/edge_intelligence_models/saved-windmill-model/frozen_model.pb",actuator_udm=action_actuator)                                                edge_intelligence_models\saved-windmill-model\frozen_model.pb",actuator_udm=action_actuator)
         #tf_reg_rpm_metric = edge_component.register(tf_rpm_metric)                            
         #tf_reg_rpm_metric.start_collecting()
 
