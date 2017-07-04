@@ -122,9 +122,9 @@ def get_rpm_for_model():
 def action_actuator(value):
     print value
 
-#collecting list of all metrics required for windmill in order rpm,vibration,
+#collecting list of all metrics required for windmill model in order rpm,vibration,
 #ambient temperature and humidity
-def collecting_all_metric():
+def collecting_all_metrics():
     list_of_metrics=[get_rpm(),get_vibration_level(),get_ambient_temperature(),get_relative_humidity()]
     return list_of_metrics
 
@@ -138,7 +138,7 @@ if __name__ == '__main__':
 
     # create a data center object, graphite in this case, using websocket as a transport layer
     graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],
-                                       port=config['GraphitePort']))
+                                       port=8080))
 
     try:
         # create a System object encapsulating the particulars of a IoT System
@@ -182,7 +182,7 @@ if __name__ == '__main__':
         reg_mem_free_metric = graphite.register(mem_free_metric)
         graphite.create_relationship(reg_edge_system, reg_mem_free_metric)
         reg_mem_free_metric.start_collecting()
-
+        '''
         # Connects to the SensorTag device over BLE
         sensor_tag_collector = SensorTagCollector(device_name=config['DeviceName'], device_mac=config['DeviceMac'],
                                                   sampling_interval_sec=1, retry_interval_sec=5,
@@ -197,7 +197,7 @@ if __name__ == '__main__':
         temperature_metric = Metric(
             name="windmill.AmbientTemperature",
             unit=ureg.degC,
-            interval=0,
+            interval=10,
             aggregation_size=1,
             sampling_function=lambda: get_ambient_temperature(sensor_tag_collector)
         )
@@ -208,7 +208,7 @@ if __name__ == '__main__':
         humidity_metric = Metric(
             name="windmill.RelativeHumidity",
             unit=None,
-            interval=0,
+            interval=10,
             aggregation_size=1,
             sampling_function=lambda: get_relative_humidity(sensor_tag_collector)
         )
@@ -219,7 +219,7 @@ if __name__ == '__main__':
         pressure_metric = Metric(
             name="windmill.Pressure",
             unit=ureg.Pa,
-            interval=0,
+            interval=10,
             aggregation_size=1,
             sampling_function=lambda: get_pressure(sensor_tag_collector)
         )
@@ -230,7 +230,7 @@ if __name__ == '__main__':
         light_metric = Metric(
             name="windmill.LightLevel",
             unit=ureg.lx,
-            interval=0,
+            interval=10,
             aggregation_size=1,
             sampling_function=lambda: get_light_level(sensor_tag_collector)
         )
@@ -241,7 +241,7 @@ if __name__ == '__main__':
         vibration_metric = Metric(
             name="windmill.Vibration",
             unit=None,
-            interval=0,
+            interval=10,
             aggregation_size=1,
             sampling_function=lambda: get_vibration_level(sensor_tag_collector)
         )
@@ -268,19 +268,32 @@ if __name__ == '__main__':
             sampling_function=get_rpm_for_model
         )
 
-        tf_all_metric = Metric(
-            name = "windmill_all_metric",
+        tf_all_metrics = Metric(
+            name = "windmill_all_metrics",
             unit=None,
-            interval=0,
-            aggregation_size=1, #should it change?
-            sampling_function=collecting_all_metric
+            interval=10,
+            aggregation_size=1, 
+            sampling_function=collecting_all_metrics
+        )
+        
+        #Model-Path can be edited in the sampleProp.conf file
+        #pass value to actuator as of now the action_actuator prints the value on the console
+        edge_component = TensorFlowEdgeComponent(config['ModelPath'],actuator_udm=action_actuator)
+
+        tf_reg_all_metrics = edge_component.register(tf_all_metrics)
+        tf_reg_all_metrics.start_collecting()
+        '''
+        tf_cpu_metric = Metric(
+            name="windmill.CPU_Utilization",
+            unit=None,
+            interval=1,
+            aggregation_size=1,
+            sampling_function=read_cpu_utilization
         )
 
-        edge_component = TensorFlowEdgeComponent(
-            '/home/pi/Desktop/Borathon/liota/edge_intelligence_models/windmill/saved-windmill-model.pb',actuator_udm=action_actuator)
-
-        tf_reg_all_metric = edge_component.register(tf_all_metric)
-        tf_reg_all_metric.start_collecting()
+        edge_component = TensorFlowEdgeComponent(config['ModelPath'], actuator_udm=action_actuator)
+        tf_reg_cpu_metric = edge_component.register(tf_cpu_metric)
+        tf_reg_cpu_metric.start_collecting()
 
     except RegistrationFailure:
         print "Registration to graphite failed"

@@ -30,7 +30,9 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import tensorflow
+import tensorflow as tf
+import pandas as pd
+import itertools
 import logging
 import numpy as np
 from liota.edge_component.edge_component import EdgeComponent
@@ -41,32 +43,32 @@ from liota.entities.metrics.metric import Metric
 from liota.entities.metrics.registered_metric import RegisteredMetric
 
 log = logging.getLogger(__name__)
-
+COLUMNS = ["Timestamp", "windmill.RPM", "windmill.Vibration", "windmill.AmbientTemperature",
+           "windmill.RelativeHumidity", "windmill.TurnOff"]
+FEATURES = ["windmill.RPM", "windmill.Vibration"]
+LABEL = "windmill.TurnOff"
+def input_fn(train_data_set):
+    features = {k: tf.constant(train_data_set[k].values) for k in FEATURES}
+    label = tf.constant(train_data_set[LABEL].values)
+    return features, label
 
 class TensorFlowEdgeComponent(EdgeComponent):
 
     def __init__(self, model_path, actuator_udm):
         super(TensorFlowEdgeComponent, self).__init__(model_path, actuator_udm)
         self.model = None
-        self.load_model()
+        self.load_model(self.model_path)
 
-    def load_model(self):
-        with tf.gfile.GFile(frozen_model_path, "rb") as f:
-            model_graph_def = tf.GraphDef()
-            model_graph_def.ParseFromString(f.read())
-
-        # built-in function to import a model_graph_def
-        with tf.Graph().as_default() as model_graph:
-            tf.import_graph_def(
-                model_graph_def, 
-                input_map=None, 
-                return_elements=None, 
-                name="prefix", 
-                op_dict=None, 
-                producer_op_list=None
-            )
-        log.info("Tensor Flow Model Loaded")    
-        return model_graph
+    def load_model(self,model_path):
+        with tf.Session() as sess:
+            feature_cols = [tf.contrib.layers.real_valued_column(k) for k in FEATURES]
+            optimizer = tf.train.FtrlOptimizer(
+                learning_rate=0.1,
+                l1_regularization_strength=1.0,
+                l2_regularization_strength=1.0)
+            predict = pd.read_csv(self.model_path, names=COLUMNS, skipinitialspace = True, skiprows=1)
+            model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, optimizer=optimizer, model_dir=self.model_path)
+            return model
 
     def register(self, entity_obj):
         if isinstance(entity_obj, Metric):
@@ -78,12 +80,18 @@ class TensorFlowEdgeComponent(EdgeComponent):
         reg_entity_child.parent = reg_entity_parent
 
     def process(self, message):
-        # TODO: Apply model and return result
-        self.actuator_udm(self.model.predict(message)[0])
+        
+        e = load_model()
+        self.actuator_udm()
 
     def _format_data(self, reg_metric):
-        # TODO: get values out of reg_metric and return values
-        pass
+        met_cnt = reg_metric.values.qsize()
+        if met_cnt == 0:
+            return
+        for _ in range(met_cnt):
+            m = reg_metric.values.get(block=True)
+            if m is not None:
+                return np.array([m[1]]).reshape(-1, 1)
 
     def set_properties(self, reg_entity, properties):
         super(TensorFlowEdgeComponent, self).set_properties(reg_entity, properties)
