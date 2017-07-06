@@ -291,7 +291,7 @@ if __name__ == '__main__':
             sampling_function=read_cpu_utilization
         )
 
-        edge_component = TensorFlowEdgeComponent(config['ModelPath'], actuator_udm=action_actuator, config['Features'])
+        edge_component = TensorFlowEdgeComponent(config['ModelPath'], config['Features'], actuator_udm=action_actuator)
         tf_reg_cpu_metric = edge_component.register(tf_cpu_metric)
         tf_reg_cpu_metric.start_collecting()
 

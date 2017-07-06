@@ -43,26 +43,19 @@ from liota.entities.metrics.metric import Metric
 from liota.entities.metrics.registered_metric import RegisteredMetric
 
 log = logging.getLogger(__name__)
-COLUMNS = ["Timestamp", "windmill.RPM", "windmill.Vibration", "windmill.AmbientTemperature",
-		   "windmill.RelativeHumidity", "windmill.TurnOff"]
-LABEL = "windmill.TurnOff"
-def input_fn(train_data_set):
-	features = {k: tf.constant(train_data_set[k].values) for k in FEATURES}
-	label = tf.constant(train_data_set[LABEL].values)
-	return features, label
 
 class TensorFlowEdgeComponent(EdgeComponent):
 
-	def __init__(self, model_path, actuator_udm, FEATURES):
+	def __init__(self, model_path, FEATURES, actuator_udm):
 		super(TensorFlowEdgeComponent, self).__init__(model_path, actuator_udm)
 		self.model = None
 		self.load_model(self.model_path)
 
 	def load_model(self,model_path):
 		with tf.Session() as sess:
-			feature_cols = [tf.contrib.layers.real_valued_column(k) for k in FEATURES]
+			feature_cols = [tf.contrib.layers.real_valued_column(k) for k in self.FEATURES]
 			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
-            
+
 	def register(self, entity_obj):
 		if isinstance(entity_obj, Metric):
 			return RegisteredMetric(entity_obj, self, None)
