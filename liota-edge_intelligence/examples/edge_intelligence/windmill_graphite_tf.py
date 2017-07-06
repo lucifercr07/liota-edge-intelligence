@@ -38,11 +38,11 @@ from linux_metrics import cpu_stat, mem_stat
 
 from liota.dccs.graphite import Graphite
 from liota.entities.metrics.metric import Metric
-from liota.entities.devices.sensor_tag import Sensors, SensorTagCollector
+#from liota.entities.devices.sensor_tag import Sensors, SensorTagCollector
 from liota.entities.edge_systems.dell5k_edge_system import Dell5KEdgeSystem
 from liota.dcc_comms.socket_comms import SocketDccComms
 from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.tensor_flow_edge_component import TensorFlowEdgeComponent 
+from liota.edge_component.tf_edge_component import TensorFlowEdgeComponent 
 
 # getting values from conf file
 config = {}
@@ -291,7 +291,7 @@ if __name__ == '__main__':
             sampling_function=read_cpu_utilization
         )
 
-        edge_component = TensorFlowEdgeComponent(config['ModelPath'], actuator_udm=action_actuator)
+        edge_component = TensorFlowEdgeComponent(config['ModelPath'], actuator_udm=action_actuator, config['Features'])
         tf_reg_cpu_metric = edge_component.register(tf_cpu_metric)
         tf_reg_cpu_metric.start_collecting()
 

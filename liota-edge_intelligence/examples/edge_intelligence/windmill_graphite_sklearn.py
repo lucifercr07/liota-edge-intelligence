@@ -38,7 +38,7 @@ from linux_metrics import cpu_stat, mem_stat
 
 from liota.dccs.graphite import Graphite
 from liota.entities.metrics.metric import Metric
-from liota.entities.devices.sensor_tag import Sensors, SensorTagCollector
+#from liota.entities.devices.sensor_tag import Sensors, SensorTagCollector
 from liota.entities.edge_systems.dell5k_edge_system import Dell5KEdgeSystem
 from liota.dcc_comms.socket_comms import SocketDccComms
 from liota.dccs.dcc import RegistrationFailure
