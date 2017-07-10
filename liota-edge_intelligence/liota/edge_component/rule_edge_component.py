@@ -9,7 +9,7 @@ from liota.entities.metrics.registered_metric import RegisteredMetric
 
 log = logging.getLogger(__name__)
 
-#rpm_limit=45
+a = []
 
 class RuleEdgeComponent(EdgeComponent):
 	def __init__(self, model_rule, actuator_udm):
@@ -26,7 +26,13 @@ class RuleEdgeComponent(EdgeComponent):
 		pass 	#when create relationship with graphite
 
 	def process(self, message):
-		self.actuator_udm(self.model_rule(message))
+		if len(a)<=2 : a.append(message)
+		
+		if(len(a)==2):
+			print("Rpm: {} Vibration: {}".format(a[0],a[1]))
+			self.actuator_udm(self.model_rule(a[0],a[1]))
+			a[:]=[]
+		#self.actuator_udm(self.model_rule(message))   #For single metric
 		#uncomment this if to stop only after 5 consecutive greater values than limit
 		'''
 		result,counter = 0,0
@@ -38,7 +44,7 @@ class RuleEdgeComponent(EdgeComponent):
 			else:
 				self.actuator_udm(0)
 		'''
-		
+
 	def _format_data(self, reg_metric):
 		met_cnt = reg_metric.values.qsize()
 		if met_cnt == 0:
@@ -46,7 +52,7 @@ class RuleEdgeComponent(EdgeComponent):
 		for _ in range(met_cnt):
 			m = reg_metric.values.get(block=True)
 			if m is not None:
-				return m[1]
+				return m
 
 	def build_model(self):
 		pass	

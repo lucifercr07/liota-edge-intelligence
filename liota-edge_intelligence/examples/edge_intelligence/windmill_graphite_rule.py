@@ -27,6 +27,13 @@ def read_mem_free():
 def get_rpm():
 	return random.randint(42,54)
 
+def get_vibration():
+	return round(random.uniform(0.480,0.7),3)
+
+def collect_rpm_vib():
+	l = [get_rpm(), get_vibration()]
+	return l
+
 def action_actuator(value):
 	print value
 
@@ -52,9 +59,23 @@ if __name__ == '__main__':
 			sampling_function=get_rpm
 		)
 
+		rule_two_metric = Metric(
+			name="windmill.rpm_vib",
+			unit=None,
+			interval=1,
+			aggregation_size=1,
+			sampling_function=collect_rpm_vib
+		)
+		
+		'''
 		edge_component = RuleEdgeComponent(config['ModelRule'], actuator_udm=action_actuator)
 		rule_reg_rpm_metric = edge_component.register(rule_rpm_metric)
 		rule_reg_rpm_metric.start_collecting()
+		'''
+		
+		edge_component = RuleEdgeComponent(config['ModelRule'], actuator_udm=action_actuator)
+		rule_reg_two_metric = edge_component.register(rule_two_metric)
+		rule_reg_two_metric.start_collecting()
 
 	except RegistrationFailure:
 		print "Registration to graphite failed"
