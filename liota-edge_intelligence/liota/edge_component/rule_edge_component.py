@@ -33,7 +33,7 @@ class RuleEdgeComponent(EdgeComponent):
 			self.actuator_udm(self.model_rule(a[0],a[1]))
 			a[:]=[]
 		#self.actuator_udm(self.model_rule(message))   #For single metric
-		#uncomment this if to stop only after 5 consecutive greater values than limit
+		#uncomment below code if to stop only after 5 consecutive greater values than limit
 		'''
 		result,counter = 0,0
 		while message is not None:
