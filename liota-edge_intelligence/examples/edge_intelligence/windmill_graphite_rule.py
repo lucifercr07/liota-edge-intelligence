@@ -25,7 +25,7 @@ def read_mem_free():
 	return round(mem_free_percent, 2)
 
 def get_rpm():
-	return random.randint(42,55)
+	return random.randint(42,54)
 
 def action_actuator(value):
 	print value

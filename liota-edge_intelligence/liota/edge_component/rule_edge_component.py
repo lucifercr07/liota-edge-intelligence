@@ -27,7 +27,18 @@ class RuleEdgeComponent(EdgeComponent):
 
 	def process(self, message):
 		self.actuator_udm(self.model_rule(message))
-
+		#uncomment this if to stop only after 5 consecutive greater values than limit
+		'''
+		result,counter = 0,0
+		while message is not None:
+			result = self.model_rule(message)
+			counter = 0 if(result==0) else counter+1
+			if(counter>=5):
+				self.actuator_udm(1)
+			else:
+				self.actuator_udm(0)
+		'''
+		
 	def _format_data(self, reg_metric):
 		met_cnt = reg_metric.values.qsize()
 		if met_cnt == 0:
