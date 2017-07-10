@@ -46,14 +46,14 @@ log = logging.getLogger(__name__)
 
 class TensorFlowEdgeComponent(EdgeComponent):
 
-	def __init__(self, model_path, FEATURES, actuator_udm):
-		super(TensorFlowEdgeComponent, self).__init__(model_path, actuator_udm)
+	def __init__(self, model_path, features, actuator_udm):
+		super(TensorFlowEdgeComponent, self).__init__(model_path, features, actuator_udm)
 		self.model = None
 		self.load_model(self.model_path)
 
 	def load_model(self,model_path):
 		with tf.Session() as sess:
-			feature_cols = [tf.contrib.layers.real_valued_column(k) for k in self.FEATURES]
+			feature_cols = [tf.contrib.layers.real_valued_column(k) for k in self.features]
 			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
 
 	def register(self, entity_obj):
@@ -66,7 +66,7 @@ class TensorFlowEdgeComponent(EdgeComponent):
 		reg_entity_child.parent = reg_entity_parent
 
 	def process(self, message):
-		self.actuator_udm(list(self.model.predict(input_fn=message)))
+		self.actuator_udm(list(self.model.predict(input_fn=message))) #Problem is here!!!
 
 	def _format_data(self, reg_metric):
 		met_cnt = reg_metric.values.qsize()
@@ -75,6 +75,7 @@ class TensorFlowEdgeComponent(EdgeComponent):
 		for _ in range(met_cnt):
 			m = reg_metric.values.get(block=True)
 			if m is not None:
+				print("Message: ",m)
 				return np.array([m[1]]).reshape(-1, 1)
 
 	def set_properties(self, reg_entity, properties):

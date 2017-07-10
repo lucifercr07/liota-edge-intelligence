@@ -33,7 +33,7 @@
 import pint
 import math
 import Queue
-
+import random
 from linux_metrics import cpu_stat, mem_stat
 
 from liota.dccs.graphite import Graphite
@@ -95,7 +95,7 @@ def get_vibration_level(sensor_tag_collector):
     vib = math.sqrt((x * x + y * y + z * z))
     return vib
 
-
+'''
 def get_rpm(sensor_tag_collector):
     # RPM of Z-axis
     # Average of 5 samples
@@ -113,7 +113,7 @@ def get_rpm(sensor_tag_collector):
             _rpm_list.append(int((abs(z_degree) * 0.16667)))
     rpm_model_queue.put(rpm)
     return rpm
-
+'''
 
 def get_rpm_for_model():
     return rpm_model_queue.get(block=True)
@@ -128,6 +128,15 @@ def collecting_all_metrics():
     list_of_metrics=[get_rpm(),get_vibration_level(),get_ambient_temperature(),get_relative_humidity()]
     return list_of_metrics
 
+def get_rpm():
+    return random.randint(40,46)
+
+def get_vibration():
+    return random.uniform(0.300,0.600)
+
+def collect_two_metrics():
+	list_metric = [get_rpm(),get_vibration()]
+	return list_metric
 
 # ---------------------------------------------------------------------------------------
 # In this example, we demonstrate how metrics collected from a SensorTag device over BLE
@@ -259,15 +268,15 @@ if __name__ == '__main__':
         reg_rpm_metric = graphite.register(rpm_metric)
         graphite.create_relationship(reg_sensor_tag, reg_rpm_metric)
         reg_rpm_metric.start_collecting()
-
+		'''
         tf_rpm_metric = Metric(
             name="windmill.RPM",
             unit=None,
             interval=0,
             aggregation_size=1,
-            sampling_function=get_rpm_for_model
+            sampling_function=get_rpm
         )
-
+        '''
         tf_all_metrics = Metric(
             name = "windmill_all_metrics",
             unit=None,
@@ -291,9 +300,17 @@ if __name__ == '__main__':
             sampling_function=read_cpu_utilization
         )
 
+        tf_two_metric = Metric(
+        	name="windmill.rpm",
+        	unit=None,
+        	interval=1,
+        	aggregation_size=1,
+        	sampling_function=collect_two_metrics
+        	)
+
         edge_component = TensorFlowEdgeComponent(config['ModelPath'], config['Features'], actuator_udm=action_actuator)
-        tf_reg_cpu_metric = edge_component.register(tf_cpu_metric)
-        tf_reg_cpu_metric.start_collecting()
+        tf_reg_two_metric = edge_component.register(tf_rpm_metric)
+        tf_reg_two_metric.start_collecting()
 
     except RegistrationFailure:
         print "Registration to graphite failed"

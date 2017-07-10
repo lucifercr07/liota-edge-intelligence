@@ -9,16 +9,15 @@ from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
 
 #tf.logging.set_verbosity(tf.logging.INFO)
 
-BASE_DIRECTORY =  "/home/prasha/liota-edge-intelligence/liota-edge_intelligence/edge_intelligence_models"
+BASE_DIRECTORY =  "/home/prasha/git_repo/liota-edge-intelligence/liota-edge_intelligence/edge_intelligence_models"
 MODEL_BASE_DIRECTORY = os.path.join(BASE_DIRECTORY, 'saved-model')
 TRAINING_FILE = os.path.join(BASE_DIRECTORY, 'windmill-train-data.csv')
 
 COLUMNS = ["Timestamp", "windmill.RPM", "windmill.Vibration", "windmill.AmbientTemperature",
            "windmill.RelativeHumidity", "windmill.TurnOff"]
-FEATURES = ["windmill.RPM", "windmill.Vibration"]
+FEATURES = ["windmill.RPM"]
 LABEL = "windmill.TurnOff"
-feature_a = tf.contrib.layers.sparse_column_with_integerized_feature("windmill.RPM", bucket_size=10)
-feature_b = tf.contrib.layers.sparse_column_with_integerized_feature("windmill.Vibration", bucket_size=10)
+
 
 def input_fn(train_data_set):
     features = {k: tf.constant(train_data_set[k].values) for k in FEATURES}

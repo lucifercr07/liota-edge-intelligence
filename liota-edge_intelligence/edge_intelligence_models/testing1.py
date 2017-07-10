@@ -2,8 +2,9 @@ import tensorflow as tf
 import os
 import pandas as pd
 import itertools
+import numpy as np
 
-BASE_DIRECTORY =  "/home/prasha/liota-edge-intelligence/liota-edge_intelligence/edge_intelligence_models"
+BASE_DIRECTORY =  "/home/prasha/git_repo/liota-edge-intelligence/liota-edge_intelligence/edge_intelligence_models"
 MODEL_BASE_DIRECTORY = os.path.join(BASE_DIRECTORY, 'saved-model')
 
 TESTING_FILE = os.path.join(BASE_DIRECTORY, 'windmill-test-data.csv')
@@ -11,12 +12,13 @@ PREDICT_FILE = os.path.join(BASE_DIRECTORY, 'windmill-predict-data.csv')
 
 COLUMNS = ["Timestamp", "windmill.RPM", "windmill.Vibration", "windmill.AmbientTemperature",
            "windmill.RelativeHumidity", "windmill.TurnOff"]
-FEATURES = ["windmill.RPM", "windmill.Vibration"]
+FEATURES = ["windmill.RPM"]
 LABEL = "windmill.TurnOff"
 
 def input_fn(train_data_set):
     features = {k: tf.constant(train_data_set[k].values) for k in FEATURES}
     label = tf.constant(train_data_set[LABEL].values)
+    #print("FEATURES: ",features,label)
     return features, label
 
 sess = tf.Session()
@@ -39,9 +41,13 @@ loss_score = ev["loss"]
 
 print("Loss: {0:f}".format(loss_score))
 
-y = e.predict(input_fn=lambda:input_fn(predict))
+def f():
+	return np.array([[45],[1]],dtype=np.int64)
 
-predictions= list(itertools.islice(y,6))
-print("Predictions: {}".format(str(predictions)))
+y = e.predict(input_fn=f)
 
+print(list(y))
+
+#predictions= list(itertools.islice(y,6))
+#print("Predictions: {}".format(str(predictions)))
 

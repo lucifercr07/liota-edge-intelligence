@@ -205,42 +205,6 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_DOUBLE
-        tensor_shape {
-          dim {
-            size: 257
-          }
-        }
-        tensor_content: "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\213\332|\252\252\252\352?\026\265\371TUU\325?\026\265\371TUU\325?\000\000\000\000\000\000\340?u%\203UUU\345?\026\265\371TUU\325?\324\225\014VUU\305?\026\265\371TUU\325?\213\332|\252\252\252\352?\026\265\371TUU\325?\026\265\371TUU\325?\213\332|\252\252\252\352?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\340?\213\332|\252\252\252\352?u%\203UUU\345?\026\265\371TUU\325?\026\265\371TUU\325?\000\000\000\000\000\000\340?u%\203UUU\345?\000\000\000\000\000\000\340?\026\265\371TUU\325?\026\265\371TUU\325?\324\225\014VUU\305?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\324\225\014VUU\305?\324\225\014VUU\305?\026\265\371TUU\325?\000\000\000\000\000\000\340?u%\203UUU\345?\026\265\371TUU\325?\026\265\371TUU\325?\026\265\371TUU\325?\213\332|\252\252\252\352?\000\000\000\000\000\000\340?u%\203UUU\345?\026\265\371TUU\325?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\000\000\000\000\000\000\000\000\340?\324\225\014VUU\305?\026\265\371TUU\325?\000\000\000\000\000\000\340?\213\332|\252\252\252\352?\026\265\371TUU\325?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\324\225\014VUU\305?\213\332|\252\252\252\352?\026\265\371TUU\325?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\340?\213\332|\252\252\252\352?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\000\000u%\203UUU\345?\026\265\371TUU\325?\026\265\371TUU\325?u%\203UUU\345?\000\000\000\000\000\000\340?\026\265\371TUU\325?\324\225\014VUU\305?\000\000\000\000\000\000\340?\324\225\014VUU\305?u%\203UUU\345?\026\265\371TUU\325?u%\203UUU\345?\324\225\014VUU\305?\213\332|\252\252\252\352?\000\000\000\000\000\000\340?\213\332|\252\252\252\352?u%\203UUU\345?\000\000\000\000\000\000\340?\026\265\371TUU\325?\213\332|\252\252\252\352?\026\265\371TUU\325?\026\265\371TUU\325?u%\203UUU\345?\213\332|\252\252\252\352?\026\265\371TUU\325?\026\265\371TUU\325?\000\000\000\000\000\000\340?u%\203UUU\345?\324\225\014VUU\305?\026\265\371TUU\325?u%\203UUU\345?\000\000\000\000\000\000\360?u%\203UUU\345?u%\203UUU\345?\026\265\371TUU\325?\000\000\000\000\000\000\360?u%\203UUU\345?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\026\265\371TUU\325?\026\265\371TUU\325?\026\265\371TUU\325?\213\332|\252\252\252\352?\026\265\371TUU\325?\000\000\000\000\000\000\340?\324\225\014VUU\305?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\026\265\371TUU\325?\213\332|\252\252\252\352?\000\000\000\000\000\000\340?\026\265\371TUU\325?\026\265\371TUU\325?\000\000\000\000\000\000\340?\026\265\371TUU\325?\213\332|\252\252\252\352?\000\000\000\000\000\000\360?\000\000\000\000\000\000\340?\026\265\371TUU\325?u%\203UUU\345?\000\000\000\000\000\000\340?\026\265\371TUU\325?\026\265\371TUU\325?\000\000\000\000\000\000\340?\026\265\371TUU\325?u%\203UUU\345?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\213\332|\252\252\252\352?u%\203UUU\345?\324\225\014VUU\305?\000\000\000\000\000\000\340?u%\203UUU\345?\000\000\000\000\000\000\340?u%\203UUU\345?\324\225\014VUU\305?u%\203UUU\345?\213\332|\252\252\252\352?\000\000\000\000\000\000\000\000\026\265\371TUU\325?u%\203UUU\345?u%\203UUU\345?u%\203UUU\345?\026\265\371TUU\325?\324\225\014VUU\305?\000\000\000\000\000\000\340?u%\203UUU\345?\026\265\371TUU\325?\026\265\371TUU\325?u%\203UUU\345?\000\000\000\000\000\000\340?\213\332|\252\252\252\352?\026\265\371TUU\325?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\324\225\014VUU\305?\000\000\000\000\000\000\340?u%\203UUU\345?u%\203UUU\345?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\340?u%\203UUU\345?u%\203UUU\345?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\026\265\371TUU\325?\026\265\371TUU\325?\026\265\371TUU\325?\324\225\014VUU\305?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\026\265\371TUU\325?\000\000\000\000\000\000\340?\000\000\000\000\000\000\000\000\000\000\000\000\000\000\340?u%\203UUU\345?\000\000\000\000\000\000\340?u%\203UUU\345?\000\000\000\000\000\000\340?u%\203UUU\345?\000\000\000\000\000\000\340?u%\203UUU\345?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\026\265\371TUU\325?u%\203UUU\345?\026\265\371TUU\325?\000\000\000\000\000\000\340?\324\225\014VUU\305?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?u%\203UUU\345?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?u%\203UUU\345?u%\203UUU\345?\000\000\000\000\000\000\340?u%\203UUU\345?u%\203UUU\345?u%\203UUU\345?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\213\332|\252\252\252\352?\026\265\371TUU\325?\026\265\371TUU\325?\026\265\371TUU\325?\000\000\000\000\000\000\340?\026\265\371TUU\325?u%\203UUU\345?\324\225\014VUU\305?u%\203UUU\345?\000\000\000\000\000\000\340?u%\203UUU\345?\026\265\371TUU\325?\026\265\371TUU\325?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?u%\203UUU\345?u%\203UUU\345?\000\000\000\000\000\000\340?u%\203UUU\345?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?\000\000\000\000\000\000\340?u%\203UUU\345?\026\265\371TUU\325?\000\000\000\000\000\000\340?u%\203UUU\345?\324\225\014VUU\305?u%\203UUU\345?\000\000\000\000\000\000\340?"
-      }
-    }
-  }
-}
-node {
-  name: "Const_2"
-  op: "Const"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 257
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
       type: DT_INT64
     }
   }
@@ -675,454 +639,6 @@ node {
   }
 }
 node {
-  name: "linear/linear/ToFloat_1"
-  op: "Cast"
-  input: "Const_1"
-  attr {
-    key: "DstT"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "SrcT"
-    value {
-      type: DT_DOUBLE
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 257
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear/windmill.Vibration/ExpandDims/dim"
-  op: "Const"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_INT32
-        tensor_shape {
-        }
-        int_val: -1
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear/windmill.Vibration/ExpandDims"
-  op: "ExpandDims"
-  input: "linear/linear/ToFloat_1"
-  input: "linear/linear/windmill.Vibration/ExpandDims/dim"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "Tdim"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 257
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/windmill.Vibration/weight/part_0/Initializer/zeros"
-  op: "Const"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_FLOAT
-        tensor_shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-        float_val: 0.0
-      }
-    }
-  }
-}
-node {
-  name: "linear/windmill.Vibration/weight/part_0"
-  op: "VariableV2"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "container"
-    value {
-      s: ""
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "shape"
-    value {
-      shape {
-        dim {
-          size: 1
-        }
-        dim {
-          size: 1
-        }
-      }
-    }
-  }
-  attr {
-    key: "shared_name"
-    value {
-      s: ""
-    }
-  }
-}
-node {
-  name: "linear/windmill.Vibration/weight/part_0/Assign"
-  op: "Assign"
-  input: "linear/windmill.Vibration/weight/part_0"
-  input: "linear/windmill.Vibration/weight/part_0/Initializer/zeros"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "use_locking"
-    value {
-      b: true
-    }
-  }
-  attr {
-    key: "validate_shape"
-    value {
-      b: true
-    }
-  }
-}
-node {
-  name: "linear/windmill.Vibration/weight/part_0/read"
-  op: "Identity"
-  input: "linear/windmill.Vibration/weight/part_0"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/windmill.Vibration/weight"
-  op: "Identity"
-  input: "linear/windmill.Vibration/weight/part_0/read"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear/windmill.Vibration/matmul"
-  op: "MatMul"
-  input: "linear/linear/windmill.Vibration/ExpandDims"
-  input: "linear/windmill.Vibration/weight"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 257
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "transpose_a"
-    value {
-      b: false
-    }
-  }
-  attr {
-    key: "transpose_b"
-    value {
-      b: false
-    }
-  }
-}
-node {
-  name: "linear/linear/Reshape_1/shape"
-  op: "Const"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 2
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_INT32
-        tensor_shape {
-          dim {
-            size: 2
-          }
-        }
-        tensor_content: "\377\377\377\377\001\000\000\000"
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear/Reshape_1"
-  op: "Reshape"
-  input: "linear/linear/windmill.Vibration/matmul"
-  input: "linear/linear/Reshape_1/shape"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "Tshape"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 257
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear/AddN"
-  op: "AddN"
-  input: "linear/linear/Reshape"
-  input: "linear/linear/Reshape_1"
-  attr {
-    key: "N"
-    value {
-      i: 2
-    }
-  }
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 257
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
   name: "linear/bias_weight/part_0/Initializer/zeros"
   op: "Const"
   attr {
@@ -1319,7 +835,7 @@ node {
 node {
   name: "linear/linear/BiasAdd"
   op: "BiasAdd"
-  input: "linear/linear/AddN"
+  input: "linear/linear/Reshape"
   input: "linear/bias_weight"
   attr {
     key: "T"
@@ -1576,7 +1092,7 @@ node {
 node {
   name: "linear/binary_logistic_head/log_loss_with_two_classes/ToFloat"
   op: "Cast"
-  input: "Const_2"
+  input: "Const_1"
   attr {
     key: "DstT"
     value {
@@ -4114,75 +3630,6 @@ node {
   }
 }
 node {
-  name: "linear/binary_logistic_head/train_op/gradients/linear/linear/Reshape_1_grad/Shape"
-  op: "Const"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 2
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_INT32
-        tensor_shape {
-          dim {
-            size: 2
-          }
-        }
-        tensor_content: "\001\001\000\000\001\000\000\000"
-      }
-    }
-  }
-}
-node {
-  name: "linear/binary_logistic_head/train_op/gradients/linear/linear/Reshape_1_grad/Reshape"
-  op: "Reshape"
-  input: "linear/binary_logistic_head/train_op/gradients/AddN"
-  input: "linear/binary_logistic_head/train_op/gradients/linear/linear/Reshape_1_grad/Shape"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "Tshape"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 257
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
   name: "linear/binary_logistic_head/train_op/gradients/linear/linear/windmill.RPM/matmul_grad/MatMul"
   op: "MatMul"
   input: "linear/binary_logistic_head/train_op/gradients/linear/linear/Reshape_grad/Reshape"
@@ -4226,84 +3673,6 @@ node {
   op: "MatMul"
   input: "linear/linear/windmill.RPM/ExpandDims"
   input: "linear/binary_logistic_head/train_op/gradients/linear/linear/Reshape_grad/Reshape"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "transpose_a"
-    value {
-      b: true
-    }
-  }
-  attr {
-    key: "transpose_b"
-    value {
-      b: false
-    }
-  }
-}
-node {
-  name: "linear/binary_logistic_head/train_op/gradients/linear/linear/windmill.Vibration/matmul_grad/MatMul"
-  op: "MatMul"
-  input: "linear/binary_logistic_head/train_op/gradients/linear/linear/Reshape_1_grad/Reshape"
-  input: "linear/windmill.Vibration/weight"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 257
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "transpose_a"
-    value {
-      b: false
-    }
-  }
-  attr {
-    key: "transpose_b"
-    value {
-      b: true
-    }
-  }
-}
-node {
-  name: "linear/binary_logistic_head/train_op/gradients/linear/linear/windmill.Vibration/matmul_grad/MatMul_1"
-  op: "MatMul"
-  input: "linear/linear/windmill.Vibration/ExpandDims"
-  input: "linear/binary_logistic_head/train_op/gradients/linear/linear/Reshape_1_grad/Reshape"
   attr {
     key: "T"
     value {
@@ -4723,384 +4092,6 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_FLOAT
-        tensor_shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-        float_val: 0.10000000149
-      }
-    }
-  }
-}
-node {
-  name: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl"
-  op: "VariableV2"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "container"
-    value {
-      s: ""
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "shape"
-    value {
-      shape {
-        dim {
-          size: 1
-        }
-        dim {
-          size: 1
-        }
-      }
-    }
-  }
-  attr {
-    key: "shared_name"
-    value {
-      s: ""
-    }
-  }
-}
-node {
-  name: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl/Assign"
-  op: "Assign"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl"
-  input: "linear/binary_logistic_head/train_op/Const_1"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "use_locking"
-    value {
-      b: true
-    }
-  }
-  attr {
-    key: "validate_shape"
-    value {
-      b: true
-    }
-  }
-}
-node {
-  name: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl/read"
-  op: "Identity"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1/Initializer/zeros"
-  op: "Const"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_FLOAT
-        tensor_shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-        float_val: 0.0
-      }
-    }
-  }
-}
-node {
-  name: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1"
-  op: "VariableV2"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "container"
-    value {
-      s: ""
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "shape"
-    value {
-      shape {
-        dim {
-          size: 1
-        }
-        dim {
-          size: 1
-        }
-      }
-    }
-  }
-  attr {
-    key: "shared_name"
-    value {
-      s: ""
-    }
-  }
-}
-node {
-  name: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1/Assign"
-  op: "Assign"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1/Initializer/zeros"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "use_locking"
-    value {
-      b: true
-    }
-  }
-  attr {
-    key: "validate_shape"
-    value {
-      b: true
-    }
-  }
-}
-node {
-  name: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1/read"
-  op: "Identity"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/binary_logistic_head/train_op/Const_2"
-  op: "Const"
-  attr {
-    key: "_class"
-    value {
-      list {
         s: "loc:@linear/bias_weight/part_0"
       }
     }
@@ -5194,7 +4185,7 @@ node {
   name: "linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl/Assign"
   op: "Assign"
   input: "linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl"
-  input: "linear/binary_logistic_head/train_op/Const_2"
+  input: "linear/binary_logistic_head/train_op/Const_1"
   attr {
     key: "T"
     value {
@@ -5604,53 +4595,6 @@ node {
   }
 }
 node {
-  name: "linear/binary_logistic_head/train_op/Ftrl/update_linear/windmill.Vibration/weight/part_0/ApplyFtrl"
-  op: "ApplyFtrl"
-  input: "linear/windmill.Vibration/weight/part_0"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1"
-  input: "linear/binary_logistic_head/train_op/gradients/linear/linear/windmill.Vibration/matmul_grad/MatMul_1"
-  input: "linear/binary_logistic_head/train_op/Ftrl/learning_rate"
-  input: "linear/binary_logistic_head/train_op/Ftrl/l1_regularization_strength"
-  input: "linear/binary_logistic_head/train_op/Ftrl/l2_regularization_strength"
-  input: "linear/binary_logistic_head/train_op/Ftrl/learning_rate_power"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "use_locking"
-    value {
-      b: false
-    }
-  }
-}
-node {
   name: "linear/binary_logistic_head/train_op/Ftrl/update_linear/bias_weight/part_0/ApplyFtrl"
   op: "ApplyFtrl"
   input: "linear/bias_weight/part_0"
@@ -5698,7 +4642,6 @@ node {
   name: "linear/binary_logistic_head/train_op/Ftrl/update"
   op: "NoOp"
   input: "^linear/binary_logistic_head/train_op/Ftrl/update_linear/windmill.RPM/weight/part_0/ApplyFtrl"
-  input: "^linear/binary_logistic_head/train_op/Ftrl/update_linear/windmill.Vibration/weight/part_0/ApplyFtrl"
   input: "^linear/binary_logistic_head/train_op/Ftrl/update_linear/bias_weight/part_0/ApplyFtrl"
 }
 node {
@@ -6494,7 +5437,7 @@ node {
   name: "linear/binary_logistic_head/metrics/Equal"
   op: "Equal"
   input: "linear/binary_logistic_head/predictions/classes"
-  input: "Const_2"
+  input: "Const_1"
   attr {
     key: "T"
     value {
@@ -7982,7 +6925,7 @@ node {
 node {
   name: "linear/binary_logistic_head/metrics/ToFloat_2"
   op: "Cast"
-  input: "Const_2"
+  input: "Const_1"
   attr {
     key: "DstT"
     value {
@@ -8729,7 +7672,7 @@ node {
 node {
   name: "linear/binary_logistic_head/metrics/ToFloat_3"
   op: "Cast"
-  input: "Const_2"
+  input: "Const_1"
   attr {
     key: "DstT"
     value {
@@ -9476,7 +8419,7 @@ node {
 node {
   name: "linear/binary_logistic_head/metrics/Cast"
   op: "Cast"
-  input: "Const_2"
+  input: "Const_1"
   attr {
     key: "DstT"
     value {
@@ -13780,7 +12723,7 @@ node {
 node {
   name: "linear/binary_logistic_head/metrics/Cast_1"
   op: "Cast"
-  input: "Const_2"
+  input: "Const_1"
   attr {
     key: "DstT"
     value {
@@ -18342,7 +17285,7 @@ node {
   name: "linear/binary_logistic_head/metrics/Equal_1"
   op: "Equal"
   input: "linear/binary_logistic_head/metrics/Cast_2"
-  input: "Const_2"
+  input: "Const_1"
   attr {
     key: "T"
     value {
@@ -19112,7 +18055,7 @@ node {
 node {
   name: "linear/binary_logistic_head/metrics/precision_at_thresholds/Cast"
   op: "Cast"
-  input: "Const_2"
+  input: "Const_1"
   attr {
     key: "DstT"
     value {
@@ -20764,7 +19707,7 @@ node {
 node {
   name: "linear/binary_logistic_head/metrics/recall_at_thresholds/Cast"
   op: "Cast"
-  input: "Const_2"
+  input: "Const_1"
   attr {
     key: "DstT"
     value {
@@ -23127,12 +22070,9 @@ node {
   op: "NoOp"
   input: "^global_step/Assign"
   input: "^linear/windmill.RPM/weight/part_0/Assign"
-  input: "^linear/windmill.Vibration/weight/part_0/Assign"
   input: "^linear/bias_weight/part_0/Assign"
   input: "^linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl/Assign"
   input: "^linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl_1/Assign"
-  input: "^linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl/Assign"
-  input: "^linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1/Assign"
   input: "^linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl/Assign"
   input: "^linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl_1/Assign"
 }
@@ -23205,34 +22145,6 @@ node {
 node {
   name: "report_uninitialized_variables/IsVariableInitialized_2"
   op: "IsVariableInitialized"
-  input: "linear/windmill.Vibration/weight/part_0"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables/IsVariableInitialized_3"
-  op: "IsVariableInitialized"
   input: "linear/bias_weight/part_0"
   attr {
     key: "_class"
@@ -23259,7 +22171,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_4"
+  name: "report_uninitialized_variables/IsVariableInitialized_3"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl"
   attr {
@@ -23287,7 +22199,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_5"
+  name: "report_uninitialized_variables/IsVariableInitialized_4"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl_1"
   attr {
@@ -23315,63 +22227,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_6"
-  op: "IsVariableInitialized"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables/IsVariableInitialized_7"
-  op: "IsVariableInitialized"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables/IsVariableInitialized_8"
+  name: "report_uninitialized_variables/IsVariableInitialized_5"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl"
   attr {
@@ -23399,7 +22255,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_9"
+  name: "report_uninitialized_variables/IsVariableInitialized_6"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl_1"
   attr {
@@ -23427,7 +22283,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_10"
+  name: "report_uninitialized_variables/IsVariableInitialized_7"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/mean/total"
   attr {
@@ -23455,7 +22311,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_11"
+  name: "report_uninitialized_variables/IsVariableInitialized_8"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/mean/count"
   attr {
@@ -23483,7 +22339,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_12"
+  name: "report_uninitialized_variables/IsVariableInitialized_9"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/accuracy/total"
   attr {
@@ -23511,7 +22367,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_13"
+  name: "report_uninitialized_variables/IsVariableInitialized_10"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/accuracy/count"
   attr {
@@ -23539,7 +22395,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_14"
+  name: "report_uninitialized_variables/IsVariableInitialized_11"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/mean_1/total"
   attr {
@@ -23567,7 +22423,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_15"
+  name: "report_uninitialized_variables/IsVariableInitialized_12"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/mean_1/count"
   attr {
@@ -23595,7 +22451,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_16"
+  name: "report_uninitialized_variables/IsVariableInitialized_13"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/mean_2/total"
   attr {
@@ -23623,7 +22479,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_17"
+  name: "report_uninitialized_variables/IsVariableInitialized_14"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/mean_2/count"
   attr {
@@ -23651,7 +22507,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_18"
+  name: "report_uninitialized_variables/IsVariableInitialized_15"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/mean_3/total"
   attr {
@@ -23679,7 +22535,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_19"
+  name: "report_uninitialized_variables/IsVariableInitialized_16"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/mean_3/count"
   attr {
@@ -23707,7 +22563,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_20"
+  name: "report_uninitialized_variables/IsVariableInitialized_17"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/auc/true_positives"
   attr {
@@ -23735,7 +22591,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_21"
+  name: "report_uninitialized_variables/IsVariableInitialized_18"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/auc/false_negatives"
   attr {
@@ -23763,7 +22619,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_22"
+  name: "report_uninitialized_variables/IsVariableInitialized_19"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/auc/true_negatives"
   attr {
@@ -23791,7 +22647,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_23"
+  name: "report_uninitialized_variables/IsVariableInitialized_20"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/auc/false_positives"
   attr {
@@ -23819,7 +22675,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_24"
+  name: "report_uninitialized_variables/IsVariableInitialized_21"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/auc_1/true_positives"
   attr {
@@ -23847,7 +22703,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_25"
+  name: "report_uninitialized_variables/IsVariableInitialized_22"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/auc_1/false_negatives"
   attr {
@@ -23875,7 +22731,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_26"
+  name: "report_uninitialized_variables/IsVariableInitialized_23"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/auc_1/true_negatives"
   attr {
@@ -23903,7 +22759,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_27"
+  name: "report_uninitialized_variables/IsVariableInitialized_24"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/auc_1/false_positives"
   attr {
@@ -23931,7 +22787,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_28"
+  name: "report_uninitialized_variables/IsVariableInitialized_25"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/accuracy_1/total"
   attr {
@@ -23959,7 +22815,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_29"
+  name: "report_uninitialized_variables/IsVariableInitialized_26"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/accuracy_1/count"
   attr {
@@ -23987,7 +22843,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_30"
+  name: "report_uninitialized_variables/IsVariableInitialized_27"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/precision_at_thresholds/true_positives"
   attr {
@@ -24015,7 +22871,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_31"
+  name: "report_uninitialized_variables/IsVariableInitialized_28"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/precision_at_thresholds/false_positives"
   attr {
@@ -24043,7 +22899,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_32"
+  name: "report_uninitialized_variables/IsVariableInitialized_29"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/recall_at_thresholds/true_positives"
   attr {
@@ -24071,7 +22927,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_33"
+  name: "report_uninitialized_variables/IsVariableInitialized_30"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/metrics/recall_at_thresholds/false_negatives"
   attr {
@@ -24132,13 +22988,10 @@ node {
   input: "report_uninitialized_variables/IsVariableInitialized_28"
   input: "report_uninitialized_variables/IsVariableInitialized_29"
   input: "report_uninitialized_variables/IsVariableInitialized_30"
-  input: "report_uninitialized_variables/IsVariableInitialized_31"
-  input: "report_uninitialized_variables/IsVariableInitialized_32"
-  input: "report_uninitialized_variables/IsVariableInitialized_33"
   attr {
     key: "N"
     value {
-      i: 34
+      i: 31
     }
   }
   attr {
@@ -24153,7 +23006,7 @@ node {
       list {
         shape {
           dim {
-            size: 34
+            size: 31
           }
         }
       }
@@ -24176,7 +23029,7 @@ node {
       list {
         shape {
           dim {
-            size: 34
+            size: 31
           }
         }
       }
@@ -24192,7 +23045,7 @@ node {
       list {
         shape {
           dim {
-            size: 34
+            size: 31
           }
         }
       }
@@ -24211,17 +23064,14 @@ node {
         dtype: DT_STRING
         tensor_shape {
           dim {
-            size: 34
+            size: 31
           }
         }
         string_val: "global_step"
         string_val: "linear/windmill.RPM/weight/part_0"
-        string_val: "linear/windmill.Vibration/weight/part_0"
         string_val: "linear/bias_weight/part_0"
         string_val: "linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl"
         string_val: "linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl_1"
-        string_val: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl"
-        string_val: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1"
         string_val: "linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl"
         string_val: "linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl_1"
         string_val: "linear/binary_logistic_head/metrics/mean/total"
@@ -24283,7 +23133,7 @@ node {
             size: 1
           }
         }
-        int_val: 34
+        int_val: 31
       }
     }
   }
@@ -24558,7 +23408,7 @@ node {
             size: 1
           }
         }
-        int_val: 34
+        int_val: 31
       }
     }
   }
@@ -24857,7 +23707,7 @@ node {
       list {
         shape {
           dim {
-            size: 34
+            size: 31
           }
         }
       }
@@ -24923,7 +23773,7 @@ node {
       list {
         shape {
           dim {
-            size: 34
+            size: 31
           }
         }
       }
@@ -25176,34 +24026,6 @@ node {
 node {
   name: "report_uninitialized_variables_1/IsVariableInitialized_2"
   op: "IsVariableInitialized"
-  input: "linear/windmill.Vibration/weight/part_0"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_3"
-  op: "IsVariableInitialized"
   input: "linear/bias_weight/part_0"
   attr {
     key: "_class"
@@ -25230,7 +24052,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_4"
+  name: "report_uninitialized_variables_1/IsVariableInitialized_3"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl"
   attr {
@@ -25258,7 +24080,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_5"
+  name: "report_uninitialized_variables_1/IsVariableInitialized_4"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl_1"
   attr {
@@ -25286,63 +24108,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_6"
-  op: "IsVariableInitialized"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_7"
-  op: "IsVariableInitialized"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_8"
+  name: "report_uninitialized_variables_1/IsVariableInitialized_5"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl"
   attr {
@@ -25370,7 +24136,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_9"
+  name: "report_uninitialized_variables_1/IsVariableInitialized_6"
   op: "IsVariableInitialized"
   input: "linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl_1"
   attr {
@@ -25407,13 +24173,10 @@ node {
   input: "report_uninitialized_variables_1/IsVariableInitialized_4"
   input: "report_uninitialized_variables_1/IsVariableInitialized_5"
   input: "report_uninitialized_variables_1/IsVariableInitialized_6"
-  input: "report_uninitialized_variables_1/IsVariableInitialized_7"
-  input: "report_uninitialized_variables_1/IsVariableInitialized_8"
-  input: "report_uninitialized_variables_1/IsVariableInitialized_9"
   attr {
     key: "N"
     value {
-      i: 10
+      i: 7
     }
   }
   attr {
@@ -25428,7 +24191,7 @@ node {
       list {
         shape {
           dim {
-            size: 10
+            size: 7
           }
         }
       }
@@ -25451,7 +24214,7 @@ node {
       list {
         shape {
           dim {
-            size: 10
+            size: 7
           }
         }
       }
@@ -25467,7 +24230,7 @@ node {
       list {
         shape {
           dim {
-            size: 10
+            size: 7
           }
         }
       }
@@ -25486,17 +24249,14 @@ node {
         dtype: DT_STRING
         tensor_shape {
           dim {
-            size: 10
+            size: 7
           }
         }
         string_val: "global_step"
         string_val: "linear/windmill.RPM/weight/part_0"
-        string_val: "linear/windmill.Vibration/weight/part_0"
         string_val: "linear/bias_weight/part_0"
         string_val: "linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl"
         string_val: "linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl_1"
-        string_val: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl"
-        string_val: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1"
         string_val: "linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl"
         string_val: "linear/binary_logistic_head/linear/bias_weight/part_0/Ftrl_1"
       }
@@ -25534,7 +24294,7 @@ node {
             size: 1
           }
         }
-        int_val: 10
+        int_val: 7
       }
     }
   }
@@ -25809,7 +24569,7 @@ node {
             size: 1
           }
         }
-        int_val: 10
+        int_val: 7
       }
     }
   }
@@ -26108,7 +24868,7 @@ node {
       list {
         shape {
           dim {
-            size: 10
+            size: 7
           }
         }
       }
@@ -26174,7 +24934,7 @@ node {
       list {
         shape {
           dim {
-            size: 10
+            size: 7
           }
         }
       }
@@ -26381,7 +25141,7 @@ node {
         dtype: DT_STRING
         tensor_shape {
         }
-        string_val: "_temp_ef0bab17af3149bba1e82cb849e8fd4d/part"
+        string_val: "_temp_dcfcf6ea76bb43c1a2107ead4e47abe3/part"
       }
     }
   }
@@ -26498,7 +25258,7 @@ node {
       list {
         shape {
           dim {
-            size: 10
+            size: 7
           }
         }
       }
@@ -26517,7 +25277,7 @@ node {
         dtype: DT_STRING
         tensor_shape {
           dim {
-            size: 10
+            size: 7
           }
         }
         string_val: "global_step"
@@ -26527,9 +25287,6 @@ node {
         string_val: "linear/windmill.RPM/weight"
         string_val: "linear/windmill.RPM/weight//windmill.RPM/weight/part_0/Ftrl"
         string_val: "linear/windmill.RPM/weight//windmill.RPM/weight/part_0/Ftrl_1"
-        string_val: "linear/windmill.Vibration/weight"
-        string_val: "linear/windmill.Vibration/weight/ill.Vibration/weight/part_0/Ftrl"
-        string_val: "linear/windmill.Vibration/weight/ill.Vibration/weight/part_0/Ftrl_1"
       }
     }
   }
@@ -26543,7 +25300,7 @@ node {
       list {
         shape {
           dim {
-            size: 10
+            size: 7
           }
         }
       }
@@ -26562,16 +25319,13 @@ node {
         dtype: DT_STRING
         tensor_shape {
           dim {
-            size: 10
+            size: 7
           }
         }
         string_val: ""
         string_val: "1 0,1"
         string_val: "1 0,1"
         string_val: "1 0,1"
-        string_val: "1 1 0,1:0,1"
-        string_val: "1 1 0,1:0,1"
-        string_val: "1 1 0,1:0,1"
         string_val: "1 1 0,1:0,1"
         string_val: "1 1 0,1:0,1"
         string_val: "1 1 0,1:0,1"
@@ -26592,17 +25346,11 @@ node {
   input: "linear/windmill.RPM/weight/part_0/read"
   input: "linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl/read"
   input: "linear/binary_logistic_head/linear/windmill.RPM/weight/part_0/Ftrl_1/read"
-  input: "linear/windmill.Vibration/weight/part_0/read"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl/read"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1/read"
   attr {
     key: "dtypes"
     value {
       list {
         type: DT_INT64
-        type: DT_FLOAT
-        type: DT_FLOAT
-        type: DT_FLOAT
         type: DT_FLOAT
         type: DT_FLOAT
         type: DT_FLOAT
@@ -27706,438 +26454,6 @@ node {
   }
 }
 node {
-  name: "save/RestoreV2_7/tensor_names"
-  op: "Const"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_STRING
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_STRING
-        tensor_shape {
-          dim {
-            size: 1
-          }
-        }
-        string_val: "linear/windmill.Vibration/weight"
-      }
-    }
-  }
-}
-node {
-  name: "save/RestoreV2_7/shape_and_slices"
-  op: "Const"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_STRING
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_STRING
-        tensor_shape {
-          dim {
-            size: 1
-          }
-        }
-        string_val: "1 1 0,1:0,1"
-      }
-    }
-  }
-}
-node {
-  name: "save/RestoreV2_7"
-  op: "RestoreV2"
-  input: "save/Const"
-  input: "save/RestoreV2_7/tensor_names"
-  input: "save/RestoreV2_7/shape_and_slices"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          unknown_rank: true
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtypes"
-    value {
-      list {
-        type: DT_FLOAT
-      }
-    }
-  }
-}
-node {
-  name: "save/Assign_7"
-  op: "Assign"
-  input: "linear/windmill.Vibration/weight/part_0"
-  input: "save/RestoreV2_7"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "use_locking"
-    value {
-      b: true
-    }
-  }
-  attr {
-    key: "validate_shape"
-    value {
-      b: true
-    }
-  }
-}
-node {
-  name: "save/RestoreV2_8/tensor_names"
-  op: "Const"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_STRING
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_STRING
-        tensor_shape {
-          dim {
-            size: 1
-          }
-        }
-        string_val: "linear/windmill.Vibration/weight/ill.Vibration/weight/part_0/Ftrl"
-      }
-    }
-  }
-}
-node {
-  name: "save/RestoreV2_8/shape_and_slices"
-  op: "Const"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_STRING
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_STRING
-        tensor_shape {
-          dim {
-            size: 1
-          }
-        }
-        string_val: "1 1 0,1:0,1"
-      }
-    }
-  }
-}
-node {
-  name: "save/RestoreV2_8"
-  op: "RestoreV2"
-  input: "save/Const"
-  input: "save/RestoreV2_8/tensor_names"
-  input: "save/RestoreV2_8/shape_and_slices"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          unknown_rank: true
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtypes"
-    value {
-      list {
-        type: DT_FLOAT
-      }
-    }
-  }
-}
-node {
-  name: "save/Assign_8"
-  op: "Assign"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl"
-  input: "save/RestoreV2_8"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "use_locking"
-    value {
-      b: true
-    }
-  }
-  attr {
-    key: "validate_shape"
-    value {
-      b: true
-    }
-  }
-}
-node {
-  name: "save/RestoreV2_9/tensor_names"
-  op: "Const"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_STRING
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_STRING
-        tensor_shape {
-          dim {
-            size: 1
-          }
-        }
-        string_val: "linear/windmill.Vibration/weight/ill.Vibration/weight/part_0/Ftrl_1"
-      }
-    }
-  }
-}
-node {
-  name: "save/RestoreV2_9/shape_and_slices"
-  op: "Const"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_STRING
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_STRING
-        tensor_shape {
-          dim {
-            size: 1
-          }
-        }
-        string_val: "1 1 0,1:0,1"
-      }
-    }
-  }
-}
-node {
-  name: "save/RestoreV2_9"
-  op: "RestoreV2"
-  input: "save/Const"
-  input: "save/RestoreV2_9/tensor_names"
-  input: "save/RestoreV2_9/shape_and_slices"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          unknown_rank: true
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtypes"
-    value {
-      list {
-        type: DT_FLOAT
-      }
-    }
-  }
-}
-node {
-  name: "save/Assign_9"
-  op: "Assign"
-  input: "linear/binary_logistic_head/linear/windmill.Vibration/weight/part_0/Ftrl_1"
-  input: "save/RestoreV2_9"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/windmill.Vibration/weight/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "use_locking"
-    value {
-      b: true
-    }
-  }
-  attr {
-    key: "validate_shape"
-    value {
-      b: true
-    }
-  }
-}
-node {
   name: "save/restore_shard"
   op: "NoOp"
   input: "^save/Assign"
@@ -28147,9 +26463,6 @@ node {
   input: "^save/Assign_4"
   input: "^save/Assign_5"
   input: "^save/Assign_6"
-  input: "^save/Assign_7"
-  input: "^save/Assign_8"
-  input: "^save/Assign_9"
 }
 node {
   name: "save/restore_all"
