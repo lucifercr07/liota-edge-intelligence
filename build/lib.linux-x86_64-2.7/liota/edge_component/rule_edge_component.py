@@ -40,6 +40,7 @@ from liota.entities.metrics.registered_metric import RegisteredMetric
 import json
 import inspect
 import types
+import Queue
 
 log = logging.getLogger(__name__)
 
@@ -67,6 +68,8 @@ class RuleEdgeComponent(EdgeComponent):
 		self.counter = 0
 		self.m1 = inspect.getargspec(model_rule)[0][0]
 		self.m2 = inspect.getargspec(model_rule)[0][1]
+		self.q1 = Queue.Queue() #is this method feasible if there will be 100 metrics 100 queues?? What can be other approach?
+		self.q2 = Queue.Queue()
 		self.metric_list = []
 
 	def register(self, entity_obj):
@@ -82,18 +85,19 @@ class RuleEdgeComponent(EdgeComponent):
 		if message is not None:
 			self.metric_list=[]
 			result = self.model_rule(*message)
-						
 			metrics_action = {}
 			metrics_action[self.m1] = message[0]
 			metrics_action[self.m2] = message[1]
-			metrics_action['result'] = result
+			
 			
 			self.counter = 0 if(result==0) else self.counter+1
 			if(self.counter>=self.exceed_limit):
 				self.actuator_udm(1)
+				metrics_action['result'] = 1
 				self.counter=0
 			else:
 				self.actuator_udm(0)
+				metrics_action['result'] = 0
 			json_data = json.dumps(metrics_action)
 			return json_data
 
@@ -103,11 +107,17 @@ class RuleEdgeComponent(EdgeComponent):
 			return
 		if met_cnt == 1:
 			m = reg_metric.values.get(block=True)
-			self.metric_list.append(m[1])
+			if reg_metric.ref_entity.name == "rpm":
+				self.q1.put(m[1])
+			if reg_metric.ref_entity.name == "vib":
+				self.q2.put(m[1])
+			if not self.q2.empty(): #we can check according to the interval one with highest interval as soon it gets fill start append
+				self.metric_list.append(self.q1.get())
+				self.metric_list.append(self.q2.get())
 		if len(self.metric_list)!= self.no_args:
 			return None
 		else:
-			return self.metric_list	
+			return self.process(self.metric_list)	
 
 	def build_model(self):
 		pass	

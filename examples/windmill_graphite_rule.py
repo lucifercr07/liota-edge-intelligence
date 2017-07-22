@@ -81,7 +81,7 @@ if __name__ == '__main__':
 	rpm_limit=45
 	vib_limit=0.500
 	ModelRule = lambda rpm,vib : 1 if (rpm>=rpm_limit and vib>=vib_limit) else 0
-	exceed_limit = 1								#number of consecutive times a limit can be exceeded
+	exceed_limit = 2							#number of consecutive times a limit can be exceeded
 
 	edge_component = RuleEdgeComponent(ModelRule, exceed_limit, actuator_udm=action_actuator)
 
@@ -109,7 +109,7 @@ if __name__ == '__main__':
 	rule_vib_metric = Metric(
 		name="vib",
 		unit=None,
-		interval=1,
+		interval=2,
 		aggregation_size=1,
 		sampling_function=get_vibration
 	)

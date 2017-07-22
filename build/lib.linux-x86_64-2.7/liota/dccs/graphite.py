@@ -64,8 +64,7 @@ class Graphite(DataCenterComponent):
             message = ''
             y = self.edge_component._format_data(reg_metric)
             if y is not None:
-                z = self.edge_component.process(y)
-                return z
+                return y
             else:
                 return None
 
