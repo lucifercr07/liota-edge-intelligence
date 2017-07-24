@@ -29,73 +29,42 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
+import logging
+import socket
 
-from linux_metrics import cpu_stat, mem_stat
-from liota.dccs.graphite import Graphite
-from liota.dcc_comms.socket_comms import SocketDccComms 
-from liota.entities.metrics.metric import Metric 
-from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.rule_edge_component import RuleEdgeComponent 
-from liota.entities.edge_systems.dell5k_edge_system  import Dell5KEdgeSystem
-import random
+from liota.dcc_comms.dcc_comms import DCCComms
 
-config = {}
-execfile('../sampleProp.conf', config)
 
-def read_cpu_procs():
-	return cpu_stats.procs_running()
+log = logging.getLogger(__name__)
 
-def read_cpu_utilization(sample_duration_sec=1):
-	cpu_pcts = cpu_stat.cpu_percents(sample_duration_sec)
-	return round((100 - cpu_pcts['idle']), 2)
 
-def read_mem_free():
-	total_mem = round(mem_stat.mem_stats()[1], 4)
-	free_mem = round(mem_stat.mem_stats()[3], 4)
-	mem_free_percent = ((total_mem - free_mem) / total_mem) * 100
-	return round(mem_free_percent, 2)
+class SocketDccComms(DCCComms):
 
-def get_rpm():
-	return random.randint(42,54)
+    def __init__(self, ip, port):
+        self.ip = ip
+        self.port = port
+        self._connect()
 
-def get_vibration():
-	return round(random.uniform(0.480,0.7),3)
+    def _connect(self):
+        self.client = socket.socket()
+        log.info("Establishing Socket Connection")
+        try:
+            self.client.connect((self.ip, self.port))
+            log.info("Socket Created")
+        except Exception as ex:
+            log.exception(
+                "Unable to establish socket connection. Please check the firewall rules and try again.")
+            self.client.close()
+            self.client = None
+            raise ex
 
-def get_temp():
-	return round(random.uniform(2.0,7.0),2)
+    def _disconnect(self):
+        raise NotImplementedError
 
-def action_actuator(value):
-	print value
+    def send(self, message, msg_attr=None):
+        log.debug("Publishing message:" + str(message))
+        if self.client is not None:
+            self.client.sendall(message)
 
-if __name__ == '__main__':
-
-	graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080))
-
-	try:
-		# create a System object encapsulating the particulars of a IoT System
-		# argument is the name of this IoT System
-		edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
-
-		# resister the IoT System with the graphite instance
-		# this call creates a representation (a Resource) in graphite for this IoT System with the name given
-		reg_edge_system = graphite.register(edge_system)
-		
-		rule_rpm_metric = Metric(
-			name="windmill.RPM",
-			unit=None,
-			interval=1,
-			aggregation_size=1,
-			sampling_function=get_rpm
-		)
-		
-		rpm_limit=45
-		ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
-		exceed_limit = 2								#number of consecutive times a limit can be exceeded
-
-		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, actuator_udm=action_actuator)
-		rule_reg_rpm_metric = edge_component.register(rule_rpm_metric)
-		rule_reg_rpm_metric.start_collecting()
-	
-		
-	except RegistrationFailure:
-		print "Registration to graphite failed"
+    def receive(self):
+        raise NotImplementedError

@@ -29,73 +29,76 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
+import json
+import logging
+import socket
+import time
 
-from linux_metrics import cpu_stat, mem_stat
-from liota.dccs.graphite import Graphite
-from liota.dcc_comms.socket_comms import SocketDccComms 
-from liota.entities.metrics.metric import Metric 
-from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.rule_edge_component import RuleEdgeComponent 
-from liota.entities.edge_systems.dell5k_edge_system  import Dell5KEdgeSystem
-import random
+from liota.dev_sims.device_simulator import DeviceSimulator
 
-config = {}
-execfile('../sampleProp.conf', config)
+log = logging.getLogger(__name__)
 
-def read_cpu_procs():
-	return cpu_stats.procs_running()
+class SocketSimulator(DeviceSimulator):
+    """
+    SocketSimulator does inter-process communication (IPC), and
+    sends simulated device beacon message.
+    """
+    def __init__(self, ip_port, name, simulator):
+        super(SocketSimulator, self).__init__(name=name)
+        str_list = ip_port.split(':')
+        self.ip = str_list[0]
+        if str_list[1] == "" or str_list[1] == None:
+            log.error("No port is specified!")
+            return
+        self.port = int(str_list[1])
+        self.simulator = simulator # backpoint to simulator obj
+        self._connect()
 
-def read_cpu_utilization(sample_duration_sec=1):
-	cpu_pcts = cpu_stat.cpu_percents(sample_duration_sec)
-	return round((100 - cpu_pcts['idle']), 2)
+    def _connect(self):
+        self.sock = socket.socket()
+        log.info("Establishing Socket Connection")
+        try:
+            self.sock.connect((self.ip, self.port))
+            log.info("Socket Created")
+        except Exception as ex:
+            log.exception(
+                "Unable to establish socket connection. Please check the firewall rules and try again.")
+            self.sock.close()
+            self.sock = None
+            raise ex
+        log.debug("SocketSimulator is initialized")
+        print "SocketSimulator is initialized"
+        self.cnt = 0
+        self.flag_alive = True
+        self.start()
 
-def read_mem_free():
-	total_mem = round(mem_stat.mem_stats()[1], 4)
-	free_mem = round(mem_stat.mem_stats()[3], 4)
-	mem_free_percent = ((total_mem - free_mem) / total_mem) * 100
-	return round(mem_free_percent, 2)
+    def clean_up(self):
+        self.flag_alive = False
+        self.sock.close()
 
-def get_rpm():
-	return random.randint(42,54)
+    def send(self, message):
+        self.sock.send(message)
 
-def get_vibration():
-	return round(random.uniform(0.480,0.7),3)
-
-def get_temp():
-	return round(random.uniform(2.0,7.0),2)
-
-def action_actuator(value):
-	print value
-
-if __name__ == '__main__':
-
-	graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080))
-
-	try:
-		# create a System object encapsulating the particulars of a IoT System
-		# argument is the name of this IoT System
-		edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
-
-		# resister the IoT System with the graphite instance
-		# this call creates a representation (a Resource) in graphite for this IoT System with the name given
-		reg_edge_system = graphite.register(edge_system)
-		
-		rule_rpm_metric = Metric(
-			name="windmill.RPM",
-			unit=None,
-			interval=1,
-			aggregation_size=1,
-			sampling_function=get_rpm
-		)
-		
-		rpm_limit=45
-		ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
-		exceed_limit = 2								#number of consecutive times a limit can be exceeded
-
-		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, actuator_udm=action_actuator)
-		rule_reg_rpm_metric = edge_component.register(rule_rpm_metric)
-		rule_reg_rpm_metric.start_collecting()
-	
-		
-	except RegistrationFailure:
-		print "Registration to graphite failed"
+    def run(self):
+        log.info('SocketSimulator is running...')
+        print 'SocketSimulator is running...'
+        while self.flag_alive:
+            msg = {
+                "LM35": {
+                    "k1": "v1",
+                    "SN": "0",
+                    "kn": "vn"
+                }
+            }
+            if self.cnt >= 5:
+                time.sleep(1000);
+            else:
+                msg["LM35"]["SN"] = str(self.cnt)
+                log.debug("send msg:{0}".format(msg))
+                self.sock.sendall(json.dumps(msg))
+                time.sleep(5)
+            self.cnt += 1
+            if self.cnt > 20:
+                self.flag = False
+        log.info('closing %s connection socket %s'.format(self.ip, self.sock))
+        self.sock.close()

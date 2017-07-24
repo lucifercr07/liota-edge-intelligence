@@ -30,72 +30,51 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from linux_metrics import cpu_stat, mem_stat
-from liota.dccs.graphite import Graphite
-from liota.dcc_comms.socket_comms import SocketDccComms 
-from liota.entities.metrics.metric import Metric 
-from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.rule_edge_component import RuleEdgeComponent 
-from liota.entities.edge_systems.dell5k_edge_system  import Dell5KEdgeSystem
-import random
+import logging
 
-config = {}
-execfile('../sampleProp.conf', config)
+from liota.edge_component.edge_component import EdgeComponent
+import csv
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
 
-def read_cpu_procs():
-	return cpu_stats.procs_running()
+log = logging.getLogger(__name__)
 
-def read_cpu_utilization(sample_duration_sec=1):
-	cpu_pcts = cpu_stat.cpu_percents(sample_duration_sec)
-	return round((100 - cpu_pcts['idle']), 2)
 
-def read_mem_free():
-	total_mem = round(mem_stat.mem_stats()[1], 4)
-	free_mem = round(mem_stat.mem_stats()[3], 4)
-	mem_free_percent = ((total_mem - free_mem) / total_mem) * 100
-	return round(mem_free_percent, 2)
+class FileReader(EdgeComponent):
 
-def get_rpm():
-	return random.randint(42,54)
+    def __init__(self, model_path, actuator_udm):
+        super(FileReader, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
 
-def get_vibration():
-	return round(random.uniform(0.480,0.7),3)
+    def load_model(self):
+        log.info("Loading model..")
 
-def get_temp():
-	return round(random.uniform(2.0,7.0),2)
+    def register(self, entity_obj):
+        if isinstance(entity_obj, Metric):
+            return RegisteredMetric(entity_obj, self, None)
+        else:
+            return RegisteredEntity(entity_obj, self, None)
 
-def action_actuator(value):
-	print value
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
 
-if __name__ == '__main__':
+    def process(self,message):
+        with open(self.model_path) as csvfile:
+            self.readCSV = csv.reader(csvfile, delimiter=',')
+            for row in self.readCSV:
+                self.actuator_udm(row)
 
-	graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080))
+    def _format_data(self, reg_metric):
+        # TODO: get values out of reg_metric and return values
+        pass
 
-	try:
-		# create a System object encapsulating the particulars of a IoT System
-		# argument is the name of this IoT System
-		edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
+    def set_properties(self, reg_entity, properties):
+        pass
 
-		# resister the IoT System with the graphite instance
-		# this call creates a representation (a Resource) in graphite for this IoT System with the name given
-		reg_edge_system = graphite.register(edge_system)
-		
-		rule_rpm_metric = Metric(
-			name="windmill.RPM",
-			unit=None,
-			interval=1,
-			aggregation_size=1,
-			sampling_function=get_rpm
-		)
-		
-		rpm_limit=45
-		ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
-		exceed_limit = 2								#number of consecutive times a limit can be exceeded
+    def unregister(self, entity_obj):
+        pass
 
-		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, actuator_udm=action_actuator)
-		rule_reg_rpm_metric = edge_component.register(rule_rpm_metric)
-		rule_reg_rpm_metric.start_collecting()
-	
-		
-	except RegistrationFailure:
-		print "Registration to graphite failed"
+    def build_model(self):
+        pass

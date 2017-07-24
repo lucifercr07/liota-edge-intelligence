@@ -30,72 +30,29 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from linux_metrics import cpu_stat, mem_stat
-from liota.dccs.graphite import Graphite
-from liota.dcc_comms.socket_comms import SocketDccComms 
-from liota.entities.metrics.metric import Metric 
-from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.rule_edge_component import RuleEdgeComponent 
-from liota.entities.edge_systems.dell5k_edge_system  import Dell5KEdgeSystem
-import random
+import logging
 
-config = {}
-execfile('../sampleProp.conf', config)
+log = logging.getLogger(__name__)
 
-def read_cpu_procs():
-	return cpu_stats.procs_running()
 
-def read_cpu_utilization(sample_duration_sec=1):
-	cpu_pcts = cpu_stat.cpu_percents(sample_duration_sec)
-	return round((100 - cpu_pcts['idle']), 2)
+class Identity:
+    """
+    This class encapsulates certificates and credentials related to a connection both at Dcc and Device side.
+    """
 
-def read_mem_free():
-	total_mem = round(mem_stat.mem_stats()[1], 4)
-	free_mem = round(mem_stat.mem_stats()[3], 4)
-	mem_free_percent = ((total_mem - free_mem) / total_mem) * 100
-	return round(mem_free_percent, 2)
-
-def get_rpm():
-	return random.randint(42,54)
-
-def get_vibration():
-	return round(random.uniform(0.480,0.7),3)
-
-def get_temp():
-	return round(random.uniform(2.0,7.0),2)
-
-def action_actuator(value):
-	print value
-
-if __name__ == '__main__':
-
-	graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080))
-
-	try:
-		# create a System object encapsulating the particulars of a IoT System
-		# argument is the name of this IoT System
-		edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
-
-		# resister the IoT System with the graphite instance
-		# this call creates a representation (a Resource) in graphite for this IoT System with the name given
-		reg_edge_system = graphite.register(edge_system)
-		
-		rule_rpm_metric = Metric(
-			name="windmill.RPM",
-			unit=None,
-			interval=1,
-			aggregation_size=1,
-			sampling_function=get_rpm
-		)
-		
-		rpm_limit=45
-		ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
-		exceed_limit = 2								#number of consecutive times a limit can be exceeded
-
-		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, actuator_udm=action_actuator)
-		rule_reg_rpm_metric = edge_component.register(rule_rpm_metric)
-		rule_reg_rpm_metric.start_collecting()
-	
-		
-	except RegistrationFailure:
-		print "Registration to graphite failed"
+    def __init__(self, root_ca_cert, username, password, cert_file, key_file):
+        """
+        :param root_ca_cert: Root CA certificate path or Self-signed server certificate path
+        :param username: Username
+        :param password: Corresponding password
+        :param cert_file: Device certificate file path
+        :param key_file: Device certificate key-file path
+        """
+        self.root_ca_cert = root_ca_cert
+        self.username = username
+        self.password = password
+        self.cert_file = cert_file
+        self.key_file = key_file
+        log.debug("Created Identity with rootCA path: {0}, username: {1}, device_cert_path: {2}"
+                  "device_key_file_path: {3}".format(self.root_ca_cert, self.username, self.cert_file,
+                                                     self.key_file))

@@ -30,72 +30,77 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from linux_metrics import cpu_stat, mem_stat
-from liota.dccs.graphite import Graphite
-from liota.dcc_comms.socket_comms import SocketDccComms 
-from liota.entities.metrics.metric import Metric 
-from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.rule_edge_component import RuleEdgeComponent 
-from liota.entities.edge_systems.dell5k_edge_system  import Dell5KEdgeSystem
+import threading
+import time
 import random
+import pint
+from liota.entities.devices.device import Device
+from liota.lib.utilities.utility import systemUUID
 
-config = {}
-execfile('../sampleProp.conf', config)
 
-def read_cpu_procs():
-	return cpu_stats.procs_running()
+class ThermistorSimulated(Device):
 
-def read_cpu_utilization(sample_duration_sec=1):
-	cpu_pcts = cpu_stat.cpu_percents(sample_duration_sec)
-	return round((100 - cpu_pcts['idle']), 2)
+    def __init__(self, name, u=5.0, r0=3000, interval=5, ureg=None):
+        super(ThermistorSimulated, self).__init__(
+            name=name,
+            entity_id=systemUUID().get_uuid(name),
+            entity_type="ThermistorSimulated"
+        )
 
-def read_mem_free():
-	total_mem = round(mem_stat.mem_stats()[1], 4)
-	free_mem = round(mem_stat.mem_stats()[3], 4)
-	mem_free_percent = ((total_mem - free_mem) / total_mem) * 100
-	return round(mem_free_percent, 2)
+        self.u = u                  # Total voltage
+        self.r0 = r0                # Reference resistor
+        self.ux = self.u / 2        # Initial voltage on thermistor
+        self.c1 = 1.40e-3
+        self.c2 = 2.37e-4
+        self.c3 = 9.90e-8
+        self.interval = interval
+        self.ureg = None
+        if isinstance(ureg, pint.UnitRegistry):
+            self.ureg = ureg
+        else:
+            self.ureg = pint.UnitRegistry()
 
-def get_rpm():
-	return random.randint(42,54)
+    def run(self):
+        self.th = threading.Thread(target=self.simulate)
+        self.th.daemon = True
+        self.th.start()
 
-def get_vibration():
-	return round(random.uniform(0.480,0.7),3)
+    #-----------------------------------------------------------------------
+    # This method randomly changes some state variables in the model every a
+    # few seconds (as is defined as interval).
 
-def get_temp():
-	return round(random.uniform(2.0,7.0),2)
+    def simulate(self):
+        while True:
+            # Sleep until next cycle
+            time.sleep(self.interval)
 
-def action_actuator(value):
-	print value
+            self.ux = min(
+                max(
+                    self.ux +
+                    random.uniform(-0.01, 0.01) * self.interval,
+                    1.5
+                ), 3.5
+            )
 
-if __name__ == '__main__':
+    #-----------------------------------------------------------------------
+    # These methods are used to access the state of the simulated physical
+    # object. A typical caller is the sampling method for a metric in a Liota
+    # application.
 
-	graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080))
+    def get_u(self):
+        return self.ureg.volt * self.u
 
-	try:
-		# create a System object encapsulating the particulars of a IoT System
-		# argument is the name of this IoT System
-		edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
+    def get_r0(self):
+        return self.ureg.ohm * self.r0
 
-		# resister the IoT System with the graphite instance
-		# this call creates a representation (a Resource) in graphite for this IoT System with the name given
-		reg_edge_system = graphite.register(edge_system)
-		
-		rule_rpm_metric = Metric(
-			name="windmill.RPM",
-			unit=None,
-			interval=1,
-			aggregation_size=1,
-			sampling_function=get_rpm
-		)
-		
-		rpm_limit=45
-		ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
-		exceed_limit = 2								#number of consecutive times a limit can be exceeded
+    def get_ux(self):
+        return self.ureg.volt * self.ux
 
-		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, actuator_udm=action_actuator)
-		rule_reg_rpm_metric = edge_component.register(rule_rpm_metric)
-		rule_reg_rpm_metric.start_collecting()
-	
-		
-	except RegistrationFailure:
-		print "Registration to graphite failed"
+    def get_c1(self):
+        return self.c1 / self.ureg.kelvin
+
+    def get_c2(self):
+        return self.c2 / self.ureg.kelvin
+
+    def get_c3(self):
+        return self.c3 / self.ureg.kelvin

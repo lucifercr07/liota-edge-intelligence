@@ -30,72 +30,37 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from linux_metrics import cpu_stat, mem_stat
-from liota.dccs.graphite import Graphite
-from liota.dcc_comms.socket_comms import SocketDccComms 
-from liota.entities.metrics.metric import Metric 
-from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.rule_edge_component import RuleEdgeComponent 
-from liota.entities.edge_systems.dell5k_edge_system  import Dell5KEdgeSystem
-import random
+from abc import ABCMeta, abstractmethod
 
-config = {}
-execfile('../sampleProp.conf', config)
 
-def read_cpu_procs():
-	return cpu_stats.procs_running()
+class DCCComms:
 
-def read_cpu_utilization(sample_duration_sec=1):
-	cpu_pcts = cpu_stat.cpu_percents(sample_duration_sec)
-	return round((100 - cpu_pcts['idle']), 2)
+    """
+    Abstract base class for all DCC communications.
+    """
+    __metaclass__ = ABCMeta
 
-def read_mem_free():
-	total_mem = round(mem_stat.mem_stats()[1], 4)
-	free_mem = round(mem_stat.mem_stats()[3], 4)
-	mem_free_percent = ((total_mem - free_mem) / total_mem) * 100
-	return round(mem_free_percent, 2)
+    #-----------------------------------------------------------------------
+    # If a specific DCCComms has parameters to establish connection, pass
+    # them to its constructor, not self._connect. Keep self._connect free of
+    # external arguments.
+    #
+    @abstractmethod
+    def __init__(self):
+        self._connect()
 
-def get_rpm():
-	return random.randint(42,54)
+    @abstractmethod
+    def _connect(self):
+        pass
 
-def get_vibration():
-	return round(random.uniform(0.480,0.7),3)
+    @abstractmethod
+    def _disconnect(self):
+        pass
 
-def get_temp():
-	return round(random.uniform(2.0,7.0),2)
+    @abstractmethod
+    def send(self, message, msg_attr):
+        pass
 
-def action_actuator(value):
-	print value
-
-if __name__ == '__main__':
-
-	graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080))
-
-	try:
-		# create a System object encapsulating the particulars of a IoT System
-		# argument is the name of this IoT System
-		edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
-
-		# resister the IoT System with the graphite instance
-		# this call creates a representation (a Resource) in graphite for this IoT System with the name given
-		reg_edge_system = graphite.register(edge_system)
-		
-		rule_rpm_metric = Metric(
-			name="windmill.RPM",
-			unit=None,
-			interval=1,
-			aggregation_size=1,
-			sampling_function=get_rpm
-		)
-		
-		rpm_limit=45
-		ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
-		exceed_limit = 2								#number of consecutive times a limit can be exceeded
-
-		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, actuator_udm=action_actuator)
-		rule_reg_rpm_metric = edge_component.register(rule_rpm_metric)
-		rule_reg_rpm_metric.start_collecting()
-	
-		
-	except RegistrationFailure:
-		print "Registration to graphite failed"
+    @abstractmethod
+    def receive(self, msg_attr):
+        pass

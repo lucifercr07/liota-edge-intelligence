@@ -30,72 +30,58 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from linux_metrics import cpu_stat, mem_stat
-from liota.dccs.graphite import Graphite
-from liota.dcc_comms.socket_comms import SocketDccComms 
-from liota.entities.metrics.metric import Metric 
-from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.rule_edge_component import RuleEdgeComponent 
-from liota.entities.edge_systems.dell5k_edge_system  import Dell5KEdgeSystem
-import random
+import json
+import logging
 
-config = {}
-execfile('../sampleProp.conf', config)
+import numpy as np
+from sklearn.externals import joblib
 
-def read_cpu_procs():
-	return cpu_stats.procs_running()
+from liota.edge_component.edge_component import EdgeComponent
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
 
-def read_cpu_utilization(sample_duration_sec=1):
-	cpu_pcts = cpu_stat.cpu_percents(sample_duration_sec)
-	return round((100 - cpu_pcts['idle']), 2)
 
-def read_mem_free():
-	total_mem = round(mem_stat.mem_stats()[1], 4)
-	free_mem = round(mem_stat.mem_stats()[3], 4)
-	mem_free_percent = ((total_mem - free_mem) / total_mem) * 100
-	return round(mem_free_percent, 2)
+log = logging.getLogger(__name__)
 
-def get_rpm():
-	return random.randint(42,54)
 
-def get_vibration():
-	return round(random.uniform(0.480,0.7),3)
+class SKLearnEdgeComponent(EdgeComponent):
 
-def get_temp():
-	return round(random.uniform(2.0,7.0),2)
+    def __init__(self, model_path, actuator_udm):
+        super(SKLearnEdgeComponent, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
 
-def action_actuator(value):
-	print value
+    def load_model(self):
+        log.info("Loading model..")
+        self.model = joblib.load(self.model_path)
 
-if __name__ == '__main__':
+    def register(self, entity_obj):
+        if isinstance(entity_obj, Metric):
+            return RegisteredMetric(entity_obj, self, None)
+        else:
+            return RegisteredEntity(entity_obj, self, None)
 
-	graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080))
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
 
-	try:
-		# create a System object encapsulating the particulars of a IoT System
-		# argument is the name of this IoT System
-		edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
+    def process(self, message):
+        self.actuator_udm(self.model.predict(message)[0])
 
-		# resister the IoT System with the graphite instance
-		# this call creates a representation (a Resource) in graphite for this IoT System with the name given
-		reg_edge_system = graphite.register(edge_system)
-		
-		rule_rpm_metric = Metric(
-			name="windmill.RPM",
-			unit=None,
-			interval=1,
-			aggregation_size=1,
-			sampling_function=get_rpm
-		)
-		
-		rpm_limit=45
-		ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
-		exceed_limit = 2								#number of consecutive times a limit can be exceeded
+    def _format_data(self, reg_metric):
+        met_cnt = reg_metric.values.qsize()
+        if met_cnt == 0:
+            return
+        for _ in range(met_cnt):
+            m = reg_metric.values.get(block=True)
+            if m is not None:
+                return np.array([m[1]]).reshape(-1, 1)
 
-		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, actuator_udm=action_actuator)
-		rule_reg_rpm_metric = edge_component.register(rule_rpm_metric)
-		rule_reg_rpm_metric.start_collecting()
-	
-		
-	except RegistrationFailure:
-		print "Registration to graphite failed"
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    def unregister(self, entity_obj):
+        pass
+
+    def build_model(self):
+        pass

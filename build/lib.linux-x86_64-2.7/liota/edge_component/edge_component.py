@@ -30,72 +30,74 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from linux_metrics import cpu_stat, mem_stat
-from liota.dccs.graphite import Graphite
-from liota.dcc_comms.socket_comms import SocketDccComms 
-from liota.entities.metrics.metric import Metric 
-from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.rule_edge_component import RuleEdgeComponent 
-from liota.entities.edge_systems.dell5k_edge_system  import Dell5KEdgeSystem
-import random
+import logging
+from abc import ABCMeta, abstractmethod
 
-config = {}
-execfile('../sampleProp.conf', config)
+from liota.entities.entity import Entity
+from liota.entities.metrics.registered_metric import RegisteredMetric
 
-def read_cpu_procs():
-	return cpu_stats.procs_running()
+log = logging.getLogger(__name__)
 
-def read_cpu_utilization(sample_duration_sec=1):
-	cpu_pcts = cpu_stat.cpu_percents(sample_duration_sec)
-	return round((100 - cpu_pcts['idle']), 2)
 
-def read_mem_free():
-	total_mem = round(mem_stat.mem_stats()[1], 4)
-	free_mem = round(mem_stat.mem_stats()[3], 4)
-	mem_free_percent = ((total_mem - free_mem) / total_mem) * 100
-	return round(mem_free_percent, 2)
+class EdgeComponent:
 
-def get_rpm():
-	return random.randint(42,54)
+    """
+    Abstract base class for all EdgeComponents.
+    """
+    __metaclass__ = ABCMeta
 
-def get_vibration():
-	return round(random.uniform(0.480,0.7),3)
+    @abstractmethod
+    def __init__(self, model_path, actuator_udm):
+        self.model_path = model_path
+        self.actuator_udm = actuator_udm
 
-def get_temp():
-	return round(random.uniform(2.0,7.0),2)
+    # -----------------------------------------------------------------------
+    # Implement this method in subclasses and do actual registration.
+    #
+    # This method should return a RegisteredEntity if successful, or raise
+    # an exception if failed. Call this method from subclasses for a type
+    # check.
+    #
 
-def action_actuator(value):
-	print value
+    @abstractmethod
+    def register(self, entity_obj):
+        if not isinstance(entity_obj, Entity):
+            log.error("Entity object is expected.")
+            raise TypeError("Entity object is expected.")
 
-if __name__ == '__main__':
+    @abstractmethod
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
 
-	graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080))
+    @abstractmethod
+    def _format_data(self, reg_metric):
+        pass
 
-	try:
-		# create a System object encapsulating the particulars of a IoT System
-		# argument is the name of this IoT System
-		edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
+    @abstractmethod
+    def process(self, message):
+        pass
 
-		# resister the IoT System with the graphite instance
-		# this call creates a representation (a Resource) in graphite for this IoT System with the name given
-		reg_edge_system = graphite.register(edge_system)
-		
-		rule_rpm_metric = Metric(
-			name="windmill.RPM",
-			unit=None,
-			interval=1,
-			aggregation_size=1,
-			sampling_function=get_rpm
-		)
-		
-		rpm_limit=45
-		ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
-		exceed_limit = 2								#number of consecutive times a limit can be exceeded
+    def publish(self, reg_metric):
+        if not isinstance(reg_metric, RegisteredMetric):
+            log.error("RegisteredMetric object is expected.")
+            raise TypeError("RegisteredMetric object is expected.")
+        self.process(self._format_data(reg_metric))
 
-		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, actuator_udm=action_actuator)
-		rule_reg_rpm_metric = edge_component.register(rule_rpm_metric)
-		rule_reg_rpm_metric.start_collecting()
-	
-		
-	except RegistrationFailure:
-		print "Registration to graphite failed"
+    @abstractmethod
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    @abstractmethod
+    def unregister(self, entity_obj):
+        if not isinstance(entity_obj, Entity):
+            raise TypeError
+
+    @abstractmethod
+    def build_model(self):
+        pass
+
+    @abstractmethod
+    def load_model(self):
+        pass
+
+class RegistrationFailure(Exception): pass

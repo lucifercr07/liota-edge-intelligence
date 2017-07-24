@@ -30,72 +30,88 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from linux_metrics import cpu_stat, mem_stat
-from liota.dccs.graphite import Graphite
-from liota.dcc_comms.socket_comms import SocketDccComms 
-from liota.entities.metrics.metric import Metric 
-from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.rule_edge_component import RuleEdgeComponent 
-from liota.entities.edge_systems.dell5k_edge_system  import Dell5KEdgeSystem
-import random
+import logging
+import os
+import sys
+import time
+import can
+from random import randint
 
-config = {}
-execfile('../sampleProp.conf', config)
+log = logging.getLogger(__name__)
 
-def read_cpu_procs():
-	return cpu_stats.procs_running()
-
-def read_cpu_utilization(sample_duration_sec=1):
-	cpu_pcts = cpu_stat.cpu_percents(sample_duration_sec)
-	return round((100 - cpu_pcts['idle']), 2)
-
-def read_mem_free():
-	total_mem = round(mem_stat.mem_stats()[1], 4)
-	free_mem = round(mem_stat.mem_stats()[3], 4)
-	mem_free_percent = ((total_mem - free_mem) / total_mem) * 100
-	return round(mem_free_percent, 2)
-
-def get_rpm():
-	return random.randint(42,54)
-
-def get_vibration():
-	return round(random.uniform(0.480,0.7),3)
-
-def get_temp():
-	return round(random.uniform(2.0,7.0),2)
-
-def action_actuator(value):
-	print value
-
-if __name__ == '__main__':
-
-	graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080))
-
-	try:
-		# create a System object encapsulating the particulars of a IoT System
-		# argument is the name of this IoT System
-		edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
-
-		# resister the IoT System with the graphite instance
-		# this call creates a representation (a Resource) in graphite for this IoT System with the name given
-		reg_edge_system = graphite.register(edge_system)
+class Can:
+	'''
+		CAN implementation for LIOTA. It uses python-can internally.
+	'''
+	def __init__(self, channel=None, can_filters=None, bustype=None, listeners=None, bus=None):
 		
-		rule_rpm_metric = Metric(
-			name="windmill.RPM",
-			unit=None,
-			interval=1,
-			aggregation_size=1,
-			sampling_function=get_rpm
-		)
-		
-		rpm_limit=45
-		ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
-		exceed_limit = 2								#number of consecutive times a limit can be exceeded
+		self.channel =  channel
+		self.bustype = bustype
+		self.can_filters = can_filters
+		self.listeners = listeners
 
-		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, actuator_udm=action_actuator)
-		rule_reg_rpm_metric = edge_component.register(rule_rpm_metric)
-		rule_reg_rpm_metric.start_collecting()
+	def connect(self):
+		self.bus = can.interface.Bus(bustype=self.bustype, channel=self.channel) 
+		log.info("Connected to Can Bus")
+
+	def send(self, arbitration_id, data, extended_id):
+		message = can.Message(arbitration_id=arbitration_id, data=data, extended_id=extended_id)  
+		try:
+			self.bus.send(message)
+			print("Message sent on {}".format(self.bus.channel_info))
+		except can.CanError:
+			print("Message not sent")
+			log.error("Message not sent over channel")
+
+		
+	def recv(self, timeout):
+		return self.bus.recv(timeout=timeout)
 	
-		
-	except RegistrationFailure:
-		print "Registration to graphite failed"
+	def set_filters(self):
+		self.bus.set_filters(self.can_filters)
+	
+	def flush_tx_buffer(self):
+		self.bus.flush_tx_buffer()
+
+	def send_periodic(self, data, arbitration_id, extended_id, period, duration=None):
+		'''
+		:param float period:
+			Period in seconds between each message
+		:param float duration:
+			The duration to keep sending this message at given rate. If
+			no duration is provided, the task will continue indefinitely.
+
+		:return: A started task instance
+		:rtype: can.CyclicSendTaskABC
+		'''
+		message = can.Message(arbitration_id=arbitration_id, data=data, extended_id=extended_id)
+		task = can.send_periodic(message, period, duration)
+		assert isinstance(task, can.CyclicSendTaskABC)
+		return task
+
+	def shutdown(self):
+		self.bus.shutdown()
+	
+	def stop(self):
+		pass
+
+class CanMessagingAttributes:
+
+	def __init__(self, pub_timestamp=0.0, arbitration_id=0, extended_id=True, is_remote_frame=False,
+				is_error_frame=False, dlc=None):
+
+		self.arbitration_id = arbitration_id
+		self.extended_id = extended_id
+
+		self.pub_timestamp = pub_timestamp
+		self.arbitration_id = arbitration_id
+		self.id_type = extended_id
+		self.is_remote_frame = is_remote_frame
+		self.is_error_frame = is_error_frame
+  
+	
+	
+
+				 
+
+	
