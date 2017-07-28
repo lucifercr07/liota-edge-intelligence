@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------#
-#  Copyright © 2015-2016 VMware, Inc. All Rights Reserved.                    #
+#  Copyright © 2015-2017 VMware, Inc. All Rights Reserved.                    #
 #                                                                             #
 #  Licensed under the BSD 2-Clause License (the “License”); you may not use   #
 #  this file except in compliance with the License.                           #
@@ -30,74 +30,36 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
-import json
-from abc import ABCMeta, abstractmethod
-
-from liota.entities.entity import Entity
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.entities.metrics.registered_metric import RegisteredMetric
-
-log = logging.getLogger(__name__)
+import unittest
 
 
-class DataCenterComponent:
+from liota.entities.metrics.metric import Metric
+import pint
 
-    """
-    Abstract base class for all DCCs.
-    """
-    __metaclass__ = ABCMeta
 
-    @abstractmethod
-    def __init__(self, comms):
-        if not isinstance(comms, DCCComms):
-            log.error("DCCComms object is expected.")
-            raise TypeError("DCCComms object is expected.")
-        self.comms = comms
+class TestEntitiesMetric(unittest.TestCase):
 
-    # -----------------------------------------------------------------------
-    # Implement this method in subclasses and do actual registration.
-    #
-    # This method should return a RegisteredEntity if successful, or raise
-    # an exception if failed. Call this method from subclasses for a type
-    # check.
-    #
+    def test_metric_init(self):
+        m = Metric("test")
+        assert isinstance(m, Metric)
 
-    @abstractmethod
-    def register(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            log.error("Entity object is expected.")
-            raise TypeError("Entity object is expected.")
+    def test_metric_units(self):
+        ureg = pint.UnitRegistry()
+        m = Metric("test", unit=ureg.meter)
+        assert isinstance(m, Metric)
 
-    @abstractmethod
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        pass
+    def test_metric_interval(self):
+        ureg = pint.UnitRegistry()
 
-    @abstractmethod
-    def _format_data(self, reg_metric):
-        pass
+        m = Metric("test5", interval=5)
+        assert isinstance(m, Metric)
 
-    def publish(self, reg_metric):
-        if not isinstance(reg_metric, RegisteredMetric):
-            log.error("RegisteredMetric object is expected.")
-            raise TypeError("RegisteredMetric object is expected.")
-        message = self._format_data(reg_metric)
-        print("DCC name: ",type(reg_metric.ref_dcc).__name__)
-        if message is not None: 
-            data = json.loads(message)
-            print(data)
-            if hasattr(reg_metric, 'msg_attr'):
-                self.comms.send(message, reg_metric.msg_attr)
-            else:
-                self.comms.send(message, None)
+        m = Metric("test5.0", interval=5.0)
+        assert isinstance(m, Metric)
 
-    @abstractmethod
-    def set_properties(self, reg_entity, properties):
-        pass
+        with self.assertRaises(TypeError):
+            m = Metric("test5s", interval=(5 * ureg.second))
+            assert m is None
 
-    @abstractmethod
-    def unregister(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            raise TypeError
-
-class RegistrationFailure(Exception): pass
+if __name__ == '__main__':
+    unittest.main()

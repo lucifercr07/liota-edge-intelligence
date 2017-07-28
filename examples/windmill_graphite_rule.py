@@ -77,7 +77,7 @@ def action_actuator(value):
 	print value
 
 if __name__ == '__main__':
-
+	
 	rpm_limit=45
 	vib_limit=0.500
 	ModelRule = lambda rpm,vib : 1 if (rpm>=rpm_limit and vib>=vib_limit) else 0

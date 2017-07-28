@@ -31,73 +31,28 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-import json
-from abc import ABCMeta, abstractmethod
-
-from liota.entities.entity import Entity
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.entities.metrics.registered_metric import RegisteredMetric
 
 log = logging.getLogger(__name__)
 
 
-class DataCenterComponent:
-
+class Identity:
     """
-    Abstract base class for all DCCs.
+    This class encapsulates certificates and credentials related to a connection both at Dcc and Device side.
     """
-    __metaclass__ = ABCMeta
 
-    @abstractmethod
-    def __init__(self, comms):
-        if not isinstance(comms, DCCComms):
-            log.error("DCCComms object is expected.")
-            raise TypeError("DCCComms object is expected.")
-        self.comms = comms
-
-    # -----------------------------------------------------------------------
-    # Implement this method in subclasses and do actual registration.
-    #
-    # This method should return a RegisteredEntity if successful, or raise
-    # an exception if failed. Call this method from subclasses for a type
-    # check.
-    #
-
-    @abstractmethod
-    def register(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            log.error("Entity object is expected.")
-            raise TypeError("Entity object is expected.")
-
-    @abstractmethod
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        pass
-
-    @abstractmethod
-    def _format_data(self, reg_metric):
-        pass
-
-    def publish(self, reg_metric):
-        if not isinstance(reg_metric, RegisteredMetric):
-            log.error("RegisteredMetric object is expected.")
-            raise TypeError("RegisteredMetric object is expected.")
-        message = self._format_data(reg_metric)
-        print("DCC name: ",type(reg_metric.ref_dcc).__name__)
-        if message is not None: 
-            data = json.loads(message)
-            print(data)
-            if hasattr(reg_metric, 'msg_attr'):
-                self.comms.send(message, reg_metric.msg_attr)
-            else:
-                self.comms.send(message, None)
-
-    @abstractmethod
-    def set_properties(self, reg_entity, properties):
-        pass
-
-    @abstractmethod
-    def unregister(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            raise TypeError
-
-class RegistrationFailure(Exception): pass
+    def __init__(self, root_ca_cert, username, password, cert_file, key_file):
+        """
+        :param root_ca_cert: Root CA certificate path or Self-signed server certificate path
+        :param username: Username
+        :param password: Corresponding password
+        :param cert_file: Device certificate file path
+        :param key_file: Device certificate key-file path
+        """
+        self.root_ca_cert = root_ca_cert
+        self.username = username
+        self.password = password
+        self.cert_file = cert_file
+        self.key_file = key_file
+        log.debug("Created Identity with rootCA path: {0}, username: {1}, device_cert_path: {2}"
+                  "device_key_file_path: {3}".format(self.root_ca_cert, self.username, self.cert_file,
+                                                     self.key_file))

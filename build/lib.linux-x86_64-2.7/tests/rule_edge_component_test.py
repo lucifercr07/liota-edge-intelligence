@@ -30,74 +30,57 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
-import json
-from abc import ABCMeta, abstractmethod
+import unittest
+from liota.edge_component.rule_edge_component import RuleEdgeComponent
 
-from liota.entities.entity import Entity
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.entities.metrics.registered_metric import RegisteredMetric
+def action_actuator():
+	pass
 
-log = logging.getLogger(__name__)
+ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
+exceed_limit = 1
 
+class TestRuleEdgeComponent(unittest.TestCase):
+	
+	def test_RuleEdgeComponent_fail_without_valid_modelRule(self):
+		#Fails if no argument pass
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent()
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+		
+		#Fails if not valid Model rule passed
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent("asd", exceed_limit, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-class DataCenterComponent:
+		#Fails if lambda function not passed as ModelRule
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(action_actuator, exceed_limit, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-    """
-    Abstract base class for all DCCs.
-    """
-    __metaclass__ = ABCMeta
+	def test_RuleEdgeComponent_takes_valid_modelRule(self):
+		
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
 
-    @abstractmethod
-    def __init__(self, comms):
-        if not isinstance(comms, DCCComms):
-            log.error("DCCComms object is expected.")
-            raise TypeError("DCCComms object is expected.")
-        self.comms = comms
+	def test_RuleEdgeComponent_fail_with_invalidArg_exceedLimit(self):
+		#Fails if int not passed as exceed_limit
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(ModelRule, 2.0, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-    # -----------------------------------------------------------------------
-    # Implement this method in subclasses and do actual registration.
-    #
-    # This method should return a RegisteredEntity if successful, or raise
-    # an exception if failed. Call this method from subclasses for a type
-    # check.
-    #
+	def test_RuleEdgeComponent_takes_validArg_exceedLimit(self):
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
 
-    @abstractmethod
-    def register(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            log.error("Entity object is expected.")
-            raise TypeError("Entity object is expected.")
+	def test_RuleEdgeComponent_fails_without_valid_actionActuator(self):
+		#Fails if action_actuator not of function type
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(ModelRule, exceed_limit, "asd")
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-    @abstractmethod
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        pass
+	def test_RuleEdgeComponent_takes_valid_actionActuator(self):
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
 
-    @abstractmethod
-    def _format_data(self, reg_metric):
-        pass
-
-    def publish(self, reg_metric):
-        if not isinstance(reg_metric, RegisteredMetric):
-            log.error("RegisteredMetric object is expected.")
-            raise TypeError("RegisteredMetric object is expected.")
-        message = self._format_data(reg_metric)
-        print("DCC name: ",type(reg_metric.ref_dcc).__name__)
-        if message is not None: 
-            data = json.loads(message)
-            print(data)
-            if hasattr(reg_metric, 'msg_attr'):
-                self.comms.send(message, reg_metric.msg_attr)
-            else:
-                self.comms.send(message, None)
-
-    @abstractmethod
-    def set_properties(self, reg_entity, properties):
-        pass
-
-    @abstractmethod
-    def unregister(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            raise TypeError
-
-class RegistrationFailure(Exception): pass
+if __name__ == '__main__':
+	unittest.main()

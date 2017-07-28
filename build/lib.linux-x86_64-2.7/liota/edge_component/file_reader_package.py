@@ -31,73 +31,50 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-import json
-from abc import ABCMeta, abstractmethod
 
-from liota.entities.entity import Entity
-from liota.dcc_comms.dcc_comms import DCCComms
+from liota.edge_component.edge_component import EdgeComponent
+import csv
+from liota.entities.metrics.metric import Metric
 from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
 
 log = logging.getLogger(__name__)
 
 
-class DataCenterComponent:
+class FileReader(EdgeComponent):
 
-    """
-    Abstract base class for all DCCs.
-    """
-    __metaclass__ = ABCMeta
+    def __init__(self, model_path, actuator_udm):
+        super(FileReader, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
 
-    @abstractmethod
-    def __init__(self, comms):
-        if not isinstance(comms, DCCComms):
-            log.error("DCCComms object is expected.")
-            raise TypeError("DCCComms object is expected.")
-        self.comms = comms
+    def load_model(self):
+        log.info("Loading model..")
 
-    # -----------------------------------------------------------------------
-    # Implement this method in subclasses and do actual registration.
-    #
-    # This method should return a RegisteredEntity if successful, or raise
-    # an exception if failed. Call this method from subclasses for a type
-    # check.
-    #
-
-    @abstractmethod
     def register(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            log.error("Entity object is expected.")
-            raise TypeError("Entity object is expected.")
+        if isinstance(entity_obj, Metric):
+            return RegisteredMetric(entity_obj, self, None)
+        else:
+            return RegisteredEntity(entity_obj, self, None)
 
-    @abstractmethod
     def create_relationship(self, reg_entity_parent, reg_entity_child):
         pass
 
-    @abstractmethod
+    def process(self,message):
+        with open(self.model_path) as csvfile:
+            self.readCSV = csv.reader(csvfile, delimiter=',')
+            for row in self.readCSV:
+                self.actuator_udm(row)
+
     def _format_data(self, reg_metric):
+        # TODO: get values out of reg_metric and return values
         pass
 
-    def publish(self, reg_metric):
-        if not isinstance(reg_metric, RegisteredMetric):
-            log.error("RegisteredMetric object is expected.")
-            raise TypeError("RegisteredMetric object is expected.")
-        message = self._format_data(reg_metric)
-        print("DCC name: ",type(reg_metric.ref_dcc).__name__)
-        if message is not None: 
-            data = json.loads(message)
-            print(data)
-            if hasattr(reg_metric, 'msg_attr'):
-                self.comms.send(message, reg_metric.msg_attr)
-            else:
-                self.comms.send(message, None)
-
-    @abstractmethod
     def set_properties(self, reg_entity, properties):
         pass
 
-    @abstractmethod
     def unregister(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            raise TypeError
+        pass
 
-class RegistrationFailure(Exception): pass
+    def build_model(self):
+        pass

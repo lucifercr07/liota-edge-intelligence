@@ -30,74 +30,77 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
-import json
-from abc import ABCMeta, abstractmethod
-
-from liota.entities.entity import Entity
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.entities.metrics.registered_metric import RegisteredMetric
-
-log = logging.getLogger(__name__)
+import threading
+import time
+import random
+import pint
+from liota.entities.devices.device import Device
+from liota.lib.utilities.utility import systemUUID
 
 
-class DataCenterComponent:
+class ThermistorSimulated(Device):
 
-    """
-    Abstract base class for all DCCs.
-    """
-    __metaclass__ = ABCMeta
+    def __init__(self, name, u=5.0, r0=3000, interval=5, ureg=None):
+        super(ThermistorSimulated, self).__init__(
+            name=name,
+            entity_id=systemUUID().get_uuid(name),
+            entity_type="ThermistorSimulated"
+        )
 
-    @abstractmethod
-    def __init__(self, comms):
-        if not isinstance(comms, DCCComms):
-            log.error("DCCComms object is expected.")
-            raise TypeError("DCCComms object is expected.")
-        self.comms = comms
+        self.u = u                  # Total voltage
+        self.r0 = r0                # Reference resistor
+        self.ux = self.u / 2        # Initial voltage on thermistor
+        self.c1 = 1.40e-3
+        self.c2 = 2.37e-4
+        self.c3 = 9.90e-8
+        self.interval = interval
+        self.ureg = None
+        if isinstance(ureg, pint.UnitRegistry):
+            self.ureg = ureg
+        else:
+            self.ureg = pint.UnitRegistry()
 
-    # -----------------------------------------------------------------------
-    # Implement this method in subclasses and do actual registration.
-    #
-    # This method should return a RegisteredEntity if successful, or raise
-    # an exception if failed. Call this method from subclasses for a type
-    # check.
-    #
+    def run(self):
+        self.th = threading.Thread(target=self.simulate)
+        self.th.daemon = True
+        self.th.start()
 
-    @abstractmethod
-    def register(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            log.error("Entity object is expected.")
-            raise TypeError("Entity object is expected.")
+    #-----------------------------------------------------------------------
+    # This method randomly changes some state variables in the model every a
+    # few seconds (as is defined as interval).
 
-    @abstractmethod
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        pass
+    def simulate(self):
+        while True:
+            # Sleep until next cycle
+            time.sleep(self.interval)
 
-    @abstractmethod
-    def _format_data(self, reg_metric):
-        pass
+            self.ux = min(
+                max(
+                    self.ux +
+                    random.uniform(-0.01, 0.01) * self.interval,
+                    1.5
+                ), 3.5
+            )
 
-    def publish(self, reg_metric):
-        if not isinstance(reg_metric, RegisteredMetric):
-            log.error("RegisteredMetric object is expected.")
-            raise TypeError("RegisteredMetric object is expected.")
-        message = self._format_data(reg_metric)
-        print("DCC name: ",type(reg_metric.ref_dcc).__name__)
-        if message is not None: 
-            data = json.loads(message)
-            print(data)
-            if hasattr(reg_metric, 'msg_attr'):
-                self.comms.send(message, reg_metric.msg_attr)
-            else:
-                self.comms.send(message, None)
+    #-----------------------------------------------------------------------
+    # These methods are used to access the state of the simulated physical
+    # object. A typical caller is the sampling method for a metric in a Liota
+    # application.
 
-    @abstractmethod
-    def set_properties(self, reg_entity, properties):
-        pass
+    def get_u(self):
+        return self.ureg.volt * self.u
 
-    @abstractmethod
-    def unregister(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            raise TypeError
+    def get_r0(self):
+        return self.ureg.ohm * self.r0
 
-class RegistrationFailure(Exception): pass
+    def get_ux(self):
+        return self.ureg.volt * self.ux
+
+    def get_c1(self):
+        return self.c1 / self.ureg.kelvin
+
+    def get_c2(self):
+        return self.c2 / self.ureg.kelvin
+
+    def get_c3(self):
+        return self.c3 / self.ureg.kelvin

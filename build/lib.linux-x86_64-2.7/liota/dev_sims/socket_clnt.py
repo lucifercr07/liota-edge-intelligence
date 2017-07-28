@@ -29,75 +29,76 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-
-import logging
 import json
-from abc import ABCMeta, abstractmethod
+import logging
+import socket
+import time
 
-from liota.entities.entity import Entity
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.dev_sims.device_simulator import DeviceSimulator
 
 log = logging.getLogger(__name__)
 
-
-class DataCenterComponent:
-
+class SocketSimulator(DeviceSimulator):
     """
-    Abstract base class for all DCCs.
+    SocketSimulator does inter-process communication (IPC), and
+    sends simulated device beacon message.
     """
-    __metaclass__ = ABCMeta
+    def __init__(self, ip_port, name, simulator):
+        super(SocketSimulator, self).__init__(name=name)
+        str_list = ip_port.split(':')
+        self.ip = str_list[0]
+        if str_list[1] == "" or str_list[1] == None:
+            log.error("No port is specified!")
+            return
+        self.port = int(str_list[1])
+        self.simulator = simulator # backpoint to simulator obj
+        self._connect()
 
-    @abstractmethod
-    def __init__(self, comms):
-        if not isinstance(comms, DCCComms):
-            log.error("DCCComms object is expected.")
-            raise TypeError("DCCComms object is expected.")
-        self.comms = comms
+    def _connect(self):
+        self.sock = socket.socket()
+        log.info("Establishing Socket Connection")
+        try:
+            self.sock.connect((self.ip, self.port))
+            log.info("Socket Created")
+        except Exception as ex:
+            log.exception(
+                "Unable to establish socket connection. Please check the firewall rules and try again.")
+            self.sock.close()
+            self.sock = None
+            raise ex
+        log.debug("SocketSimulator is initialized")
+        print "SocketSimulator is initialized"
+        self.cnt = 0
+        self.flag_alive = True
+        self.start()
 
-    # -----------------------------------------------------------------------
-    # Implement this method in subclasses and do actual registration.
-    #
-    # This method should return a RegisteredEntity if successful, or raise
-    # an exception if failed. Call this method from subclasses for a type
-    # check.
-    #
+    def clean_up(self):
+        self.flag_alive = False
+        self.sock.close()
 
-    @abstractmethod
-    def register(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            log.error("Entity object is expected.")
-            raise TypeError("Entity object is expected.")
+    def send(self, message):
+        self.sock.send(message)
 
-    @abstractmethod
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        pass
-
-    @abstractmethod
-    def _format_data(self, reg_metric):
-        pass
-
-    def publish(self, reg_metric):
-        if not isinstance(reg_metric, RegisteredMetric):
-            log.error("RegisteredMetric object is expected.")
-            raise TypeError("RegisteredMetric object is expected.")
-        message = self._format_data(reg_metric)
-        print("DCC name: ",type(reg_metric.ref_dcc).__name__)
-        if message is not None: 
-            data = json.loads(message)
-            print(data)
-            if hasattr(reg_metric, 'msg_attr'):
-                self.comms.send(message, reg_metric.msg_attr)
+    def run(self):
+        log.info('SocketSimulator is running...')
+        print 'SocketSimulator is running...'
+        while self.flag_alive:
+            msg = {
+                "LM35": {
+                    "k1": "v1",
+                    "SN": "0",
+                    "kn": "vn"
+                }
+            }
+            if self.cnt >= 5:
+                time.sleep(1000);
             else:
-                self.comms.send(message, None)
-
-    @abstractmethod
-    def set_properties(self, reg_entity, properties):
-        pass
-
-    @abstractmethod
-    def unregister(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            raise TypeError
-
-class RegistrationFailure(Exception): pass
+                msg["LM35"]["SN"] = str(self.cnt)
+                log.debug("send msg:{0}".format(msg))
+                self.sock.sendall(json.dumps(msg))
+                time.sleep(5)
+            self.cnt += 1
+            if self.cnt > 20:
+                self.flag = False
+        log.info('closing %s connection socket %s'.format(self.ip, self.sock))
+        self.sock.close()

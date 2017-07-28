@@ -30,74 +30,37 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
-import json
 from abc import ABCMeta, abstractmethod
 
-from liota.entities.entity import Entity
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.entities.metrics.registered_metric import RegisteredMetric
 
-log = logging.getLogger(__name__)
-
-
-class DataCenterComponent:
+class DeviceComms:
 
     """
-    Abstract base class for all DCCs.
+    Abstract base class for all device communications.
     """
     __metaclass__ = ABCMeta
 
-    @abstractmethod
-    def __init__(self, comms):
-        if not isinstance(comms, DCCComms):
-            log.error("DCCComms object is expected.")
-            raise TypeError("DCCComms object is expected.")
-        self.comms = comms
-
-    # -----------------------------------------------------------------------
-    # Implement this method in subclasses and do actual registration.
+    #-----------------------------------------------------------------------
+    # If a specific DeviceComms has parameters to establish connection, pass
+    # them to its constructor, not self._connect. Keep self._connect free of
+    # external arguments.
     #
-    # This method should return a RegisteredEntity if successful, or raise
-    # an exception if failed. Call this method from subclasses for a type
-    # check.
-    #
+    @abstractmethod
+    def __init__(self):
+        self._connect()
 
     @abstractmethod
-    def register(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            log.error("Entity object is expected.")
-            raise TypeError("Entity object is expected.")
-
-    @abstractmethod
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
+    def _connect(self):
         pass
 
     @abstractmethod
-    def _format_data(self, reg_metric):
-        pass
-
-    def publish(self, reg_metric):
-        if not isinstance(reg_metric, RegisteredMetric):
-            log.error("RegisteredMetric object is expected.")
-            raise TypeError("RegisteredMetric object is expected.")
-        message = self._format_data(reg_metric)
-        print("DCC name: ",type(reg_metric.ref_dcc).__name__)
-        if message is not None: 
-            data = json.loads(message)
-            print(data)
-            if hasattr(reg_metric, 'msg_attr'):
-                self.comms.send(message, reg_metric.msg_attr)
-            else:
-                self.comms.send(message, None)
-
-    @abstractmethod
-    def set_properties(self, reg_entity, properties):
+    def _disconnect(self):
         pass
 
     @abstractmethod
-    def unregister(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            raise TypeError
+    def send(self, message):
+        pass
 
-class RegistrationFailure(Exception): pass
+    @abstractmethod
+    def receive(self):
+        pass

@@ -31,29 +31,25 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-import json
 from abc import ABCMeta, abstractmethod
 
 from liota.entities.entity import Entity
-from liota.dcc_comms.dcc_comms import DCCComms
 from liota.entities.metrics.registered_metric import RegisteredMetric
 
 log = logging.getLogger(__name__)
 
 
-class DataCenterComponent:
+class EdgeComponent:
 
     """
-    Abstract base class for all DCCs.
+    Abstract base class for all EdgeComponents.
     """
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, comms):
-        if not isinstance(comms, DCCComms):
-            log.error("DCCComms object is expected.")
-            raise TypeError("DCCComms object is expected.")
-        self.comms = comms
+    def __init__(self, model_path, actuator_udm):
+        self.model_path = model_path
+        self.actuator_udm = actuator_udm
 
     # -----------------------------------------------------------------------
     # Implement this method in subclasses and do actual registration.
@@ -77,19 +73,15 @@ class DataCenterComponent:
     def _format_data(self, reg_metric):
         pass
 
+    @abstractmethod
+    def process(self, message):
+        pass
+
     def publish(self, reg_metric):
         if not isinstance(reg_metric, RegisteredMetric):
             log.error("RegisteredMetric object is expected.")
             raise TypeError("RegisteredMetric object is expected.")
-        message = self._format_data(reg_metric)
-        print("DCC name: ",type(reg_metric.ref_dcc).__name__)
-        if message is not None: 
-            data = json.loads(message)
-            print(data)
-            if hasattr(reg_metric, 'msg_attr'):
-                self.comms.send(message, reg_metric.msg_attr)
-            else:
-                self.comms.send(message, None)
+        self.process(self._format_data(reg_metric))
 
     @abstractmethod
     def set_properties(self, reg_entity, properties):
@@ -99,5 +91,13 @@ class DataCenterComponent:
     def unregister(self, entity_obj):
         if not isinstance(entity_obj, Entity):
             raise TypeError
+
+    @abstractmethod
+    def build_model(self):
+        pass
+
+    @abstractmethod
+    def load_model(self):
+        pass
 
 class RegistrationFailure(Exception): pass

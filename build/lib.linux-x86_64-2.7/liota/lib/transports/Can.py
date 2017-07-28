@@ -31,73 +31,87 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-import json
-from abc import ABCMeta, abstractmethod
-
-from liota.entities.entity import Entity
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.entities.metrics.registered_metric import RegisteredMetric
+import os
+import sys
+import time
+import can
+from random import randint
 
 log = logging.getLogger(__name__)
 
+class Can:
+	'''
+		CAN implementation for LIOTA. It uses python-can internally.
+	'''
+	def __init__(self, channel=None, can_filters=None, bustype=None, listeners=None, bus=None):
+		
+		self.channel =  channel
+		self.bustype = bustype
+		self.can_filters = can_filters
+		self.listeners = listeners
 
-class DataCenterComponent:
+	def connect(self):
+		self.bus = can.interface.Bus(bustype=self.bustype, channel=self.channel) 
+		log.info("Connected to Can Bus")
 
-    """
-    Abstract base class for all DCCs.
-    """
-    __metaclass__ = ABCMeta
+	def send(self, arbitration_id, data, extended_id):
+		message = can.Message(arbitration_id=arbitration_id, data=data, extended_id=extended_id)  
+		try:
+			self.bus.send(message)
+			print("Message sent on {}".format(self.bus.channel_info))
+		except can.CanError:
+			print("Message not sent")
+			log.error("Message not sent over channel")
 
-    @abstractmethod
-    def __init__(self, comms):
-        if not isinstance(comms, DCCComms):
-            log.error("DCCComms object is expected.")
-            raise TypeError("DCCComms object is expected.")
-        self.comms = comms
+		
+	def recv(self, timeout):
+		return self.bus.recv(timeout=timeout)
+	
+	def set_filters(self):
+		self.bus.set_filters(self.can_filters)
+	
+	def flush_tx_buffer(self):
+		self.bus.flush_tx_buffer()
 
-    # -----------------------------------------------------------------------
-    # Implement this method in subclasses and do actual registration.
-    #
-    # This method should return a RegisteredEntity if successful, or raise
-    # an exception if failed. Call this method from subclasses for a type
-    # check.
-    #
+	def send_periodic(self, data, arbitration_id, extended_id, period, duration=None):
+		'''
+		:param float period:
+			Period in seconds between each message
+		:param float duration:
+			The duration to keep sending this message at given rate. If
+			no duration is provided, the task will continue indefinitely.
 
-    @abstractmethod
-    def register(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            log.error("Entity object is expected.")
-            raise TypeError("Entity object is expected.")
+		:return: A started task instance
+		:rtype: can.CyclicSendTaskABC
+		'''
+		message = can.Message(arbitration_id=arbitration_id, data=data, extended_id=extended_id)
+		task = can.send_periodic(message, period, duration)
+		assert isinstance(task, can.CyclicSendTaskABC)
+		return task
 
-    @abstractmethod
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        pass
+	def shutdown(self):
+		self.bus.shutdown()
+	
+	def stop(self):
+		pass
 
-    @abstractmethod
-    def _format_data(self, reg_metric):
-        pass
+class CanMessagingAttributes:
 
-    def publish(self, reg_metric):
-        if not isinstance(reg_metric, RegisteredMetric):
-            log.error("RegisteredMetric object is expected.")
-            raise TypeError("RegisteredMetric object is expected.")
-        message = self._format_data(reg_metric)
-        print("DCC name: ",type(reg_metric.ref_dcc).__name__)
-        if message is not None: 
-            data = json.loads(message)
-            print(data)
-            if hasattr(reg_metric, 'msg_attr'):
-                self.comms.send(message, reg_metric.msg_attr)
-            else:
-                self.comms.send(message, None)
+	def __init__(self, pub_timestamp=0.0, arbitration_id=0, extended_id=True, is_remote_frame=False,
+				is_error_frame=False, dlc=None):
 
-    @abstractmethod
-    def set_properties(self, reg_entity, properties):
-        pass
+		self.arbitration_id = arbitration_id
+		self.extended_id = extended_id
 
-    @abstractmethod
-    def unregister(self, entity_obj):
-        if not isinstance(entity_obj, Entity):
-            raise TypeError
+		self.pub_timestamp = pub_timestamp
+		self.arbitration_id = arbitration_id
+		self.id_type = extended_id
+		self.is_remote_frame = is_remote_frame
+		self.is_error_frame = is_error_frame
+  
+	
+	
 
-class RegistrationFailure(Exception): pass
+				 
+
+	
