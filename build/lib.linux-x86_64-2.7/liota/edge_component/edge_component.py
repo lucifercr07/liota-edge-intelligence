@@ -29,47 +29,75 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
+
 import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
+from abc import ABCMeta, abstractmethod
+
+from liota.entities.entity import Entity
+from liota.entities.metrics.registered_metric import RegisteredMetric
 
 log = logging.getLogger(__name__)
 
-class SocketDccComms(DCCComms):
 
-    CONN_TIMEOUT = 0
+class EdgeComponent:
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
+    """
+    Abstract base class for all EdgeComponents.
+    """
+    __metaclass__ = ABCMeta
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
+    @abstractmethod
+    def __init__(self, model_path, actuator_udm):
+        self.model_path = model_path
+        self.actuator_udm = actuator_udm
 
-    def _disconnect(self):
-        raise NotImplementedError
+    # -----------------------------------------------------------------------
+    # Implement this method in subclasses and do actual registration.
+    #
+    # This method should return a RegisteredEntity if successful, or raise
+    # an exception if failed. Call this method from subclasses for a type
+    # check.
+    #
 
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
+    @abstractmethod
+    def register(self, entity_obj):
+        if not isinstance(entity_obj, Entity):
+            log.error("Entity object is expected.")
+            raise TypeError("Entity object is expected.")
 
-    def receive(self):
-        raise NotImplementedError
+    @abstractmethod
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
+
+    @abstractmethod
+    def _format_data(self, reg_metric):
+        pass
+
+    @abstractmethod
+    def process(self, message):
+        pass
+
+    def publish(self, reg_metric):
+        if not isinstance(reg_metric, RegisteredMetric):
+            log.error("RegisteredMetric object is expected.")
+            raise TypeError("RegisteredMetric object is expected.")
+        self.process(self._format_data(reg_metric))
+
+    @abstractmethod
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    @abstractmethod
+    def unregister(self, entity_obj):
+        if not isinstance(entity_obj, Entity):
+            raise TypeError
+
+    @abstractmethod
+    def build_model(self):
+        pass
+
+    @abstractmethod
+    def load_model(self):
+        pass
+
+class RegistrationFailure(Exception): pass

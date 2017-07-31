@@ -29,47 +29,14 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
 
-log = logging.getLogger(__name__)
+from liota.entities.edge_systems.edge_system import EdgeSystem
+from liota.lib.utilities.utility import systemUUID
 
-class SocketDccComms(DCCComms):
+class Dell5KEdgeSystem(EdgeSystem):
 
-    CONN_TIMEOUT = 0
-
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
-
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
-
-    def _disconnect(self):
-        raise NotImplementedError
-
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
-
-    def receive(self):
-        raise NotImplementedError
+    def __init__(self, name):
+        super(Dell5KEdgeSystem, self).__init__(
+            name=name,
+            entity_id=systemUUID().get_uuid(name)
+        )

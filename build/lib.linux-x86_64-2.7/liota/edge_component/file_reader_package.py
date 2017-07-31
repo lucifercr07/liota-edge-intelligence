@@ -29,47 +29,52 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
+
 import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
+
+from liota.edge_component.edge_component import EdgeComponent
+import csv
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
 
 log = logging.getLogger(__name__)
 
-class SocketDccComms(DCCComms):
 
-    CONN_TIMEOUT = 0
+class FileReader(EdgeComponent):
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
+    def __init__(self, model_path, actuator_udm):
+        super(FileReader, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
+    def load_model(self):
+        log.info("Loading model..")
 
-    def _disconnect(self):
-        raise NotImplementedError
+    def register(self, entity_obj):
+        if isinstance(entity_obj, Metric):
+            return RegisteredMetric(entity_obj, self, None)
+        else:
+            return RegisteredEntity(entity_obj, self, None)
 
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
 
-    def receive(self):
-        raise NotImplementedError
+    def process(self,message):
+        with open(self.model_path) as csvfile:
+            self.readCSV = csv.reader(csvfile, delimiter=',')
+            for row in self.readCSV:
+                self.actuator_udm(row)
+
+    def _format_data(self, reg_metric):
+        # TODO: get values out of reg_metric and return values
+        pass
+
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    def unregister(self, entity_obj):
+        pass
+
+    def build_model(self):
+        pass

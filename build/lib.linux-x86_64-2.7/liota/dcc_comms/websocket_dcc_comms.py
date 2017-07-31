@@ -30,46 +30,32 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 import logging
-import socket
+import Queue
+from liota.lib.transports.web_socket import WebSocket
+
 from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
+
 
 log = logging.getLogger(__name__)
 
-class SocketDccComms(DCCComms):
 
-    CONN_TIMEOUT = 0
+class WebSocketDccComms(DCCComms):
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
+    def __init__(self, url, verify_cert, identity=None):
+        self.url = url
+        self.verify_cert = verify_cert
+        self.identity = identity
+        self.userdata = Queue.Queue()
         self._connect()
 
     def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
+        self.client = WebSocket(self.url, self.verify_cert, self.identity)
 
     def _disconnect(self):
         raise NotImplementedError
 
     def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
+        self.client.send(message)
 
-    def receive(self):
-        raise NotImplementedError
+    def receive(self, msg_attr=None):
+        self.client.receive(self.userdata)

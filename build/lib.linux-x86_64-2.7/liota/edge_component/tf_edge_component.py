@@ -29,47 +29,62 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
+
+import tensorflow as tf
+import pandas as pd
+import itertools
 import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
+import numpy as np
+from liota.edge_component.edge_component import EdgeComponent
+from liota.entities.registered_entity import RegisteredEntity
+from liota.entities.edge_systems.edge_system import EdgeSystem
+from liota.entities.devices.device import Device
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
 
 log = logging.getLogger(__name__)
 
-class SocketDccComms(DCCComms):
+class TensorFlowEdgeComponent(EdgeComponent):
 
-    CONN_TIMEOUT = 0
+	def __init__(self, model_path, features, actuator_udm):
+		super(TensorFlowEdgeComponent, self).__init__(model_path, features, actuator_udm)
+		self.model = None
+		self.load_model(self.model_path)
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
+	def load_model(self,model_path):
+		with tf.Session() as sess:
+			feature_cols = [tf.contrib.layers.real_valued_column(k) for k in self.features]
+			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
+	def register(self, entity_obj):
+		if isinstance(entity_obj, Metric):
+			return RegisteredMetric(entity_obj, self, None)
+		else:
+			return RegisteredEntity(entity_obj, self, None)
 
-    def _disconnect(self):
-        raise NotImplementedError
+	def create_relationship(self, reg_entity_parent, reg_entity_child):
+		reg_entity_child.parent = reg_entity_parent
 
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
+	def process(self, message):
+		self.actuator_udm(list(self.model.predict(input_fn=message))) #Problem is here!!!
 
-    def receive(self):
-        raise NotImplementedError
+	def _format_data(self, reg_metric):
+		met_cnt = reg_metric.values.qsize()
+		if met_cnt == 0:
+			return
+		for _ in range(met_cnt):
+			m = reg_metric.values.get(block=True)
+			if m is not None:
+				print("Message: ",m)
+				return np.array([m[1]]).reshape(-1, 1)
+
+	def set_properties(self, reg_entity, properties):
+		super(TensorFlowEdgeComponent, self).set_properties(reg_entity, properties)
+
+	def unregister(self, entity_obj):
+		pass
+
+	def build_model(self):
+		pass
+
+

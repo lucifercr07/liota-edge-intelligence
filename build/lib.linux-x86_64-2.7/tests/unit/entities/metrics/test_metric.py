@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------#
-#  Copyright © 2015-2016 VMware, Inc. All Rights Reserved.                    #
+#  Copyright © 2015-2017 VMware, Inc. All Rights Reserved.                    #
 #                                                                             #
 #  Licensed under the BSD 2-Clause License (the “License”); you may not use   #
 #  this file except in compliance with the License.                           #
@@ -29,47 +29,37 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
 
-log = logging.getLogger(__name__)
+import unittest
 
-class SocketDccComms(DCCComms):
 
-    CONN_TIMEOUT = 0
+from liota.entities.metrics.metric import Metric
+import pint
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
+class TestEntitiesMetric(unittest.TestCase):
 
-    def _disconnect(self):
-        raise NotImplementedError
+    def test_metric_init(self):
+        m = Metric("test")
+        assert isinstance(m, Metric)
 
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
+    def test_metric_units(self):
+        ureg = pint.UnitRegistry()
+        m = Metric("test", unit=ureg.meter)
+        assert isinstance(m, Metric)
 
-    def receive(self):
-        raise NotImplementedError
+    def test_metric_interval(self):
+        ureg = pint.UnitRegistry()
+
+        m = Metric("test5", interval=5)
+        assert isinstance(m, Metric)
+
+        m = Metric("test5.0", interval=5.0)
+        assert isinstance(m, Metric)
+
+        with self.assertRaises(TypeError):
+            m = Metric("test5s", interval=(5 * ureg.second))
+            assert m is None
+
+if __name__ == '__main__':
+    unittest.main()

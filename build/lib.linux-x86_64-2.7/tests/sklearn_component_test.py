@@ -29,47 +29,42 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
 
-log = logging.getLogger(__name__)
+import unittest
+from liota.edge_component.sklearn_edge_component import SKLearnEdgeComponent
+from mock import patch
 
-class SocketDccComms(DCCComms):
+def action_actuator():
+	pass
 
-    CONN_TIMEOUT = 0
+ModelPath = "/home/prasha/git_repo/liota_edge_intelligence/edge_intelligence_models/windmill-model/finalized_model.sav"
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
+class TestSKLearnEdgeComponent(unittest.TestCase):
+	
+	def test_Component_fails_without_valid_ModelPath(self):
+		with self.assertRaises(Exception):
+			edge_component = SKLearnEdgeComponent("/home/asd", "asd")
+			assertNotIsInstance(edge_component, SKLearnEdgeComponent)
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
+	def test_SKLearnEdgeComponent_fails_without_valid_ModelPath(self):
+		with self.assertRaises(Exception):
+			edge_component = SKLearnEdgeComponent(ModelPath, "asd")
+			assert isinstance(edge_component, SKLearnEdgeComponent)
+		
+	def test_SKLearnEdgeComponent_fails_without_valid_actionActuator(self):
+		#Fails if action_actuator not of function type
+		with self.assertRaises(Exception):
+			edge_component = SKLearnEdgeComponent(ModelPath, "asd")
+			assertNotIsInstance(edge_component, SKLearnEdgeComponent)
 
-    def _disconnect(self):
-        raise NotImplementedError
-
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
-
-    def receive(self):
-        raise NotImplementedError
+	def test_SKLearnEdgeComponent_takes_valid_actionActuator(self):
+		edge_component = SKLearnEdgeComponent(ModelPath, action_actuator)
+		assert isinstance(edge_component, SKLearnEdgeComponent)
+'''
+	def test_SKLearnEdgeComponent_actionActuator_called(self, mock):
+		edge_component = RuleEdgeComponent(ModelPath, action_actuator)
+		edge_component.process(message)
+		self.assertTrue(mock.called)
+'''
+if __name__ == '__main__':
+	unittest.main()

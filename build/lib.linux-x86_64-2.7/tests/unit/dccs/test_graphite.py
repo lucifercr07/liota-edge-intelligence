@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------#
-#  Copyright © 2015-2016 VMware, Inc. All Rights Reserved.                    #
+#  Copyright © 2015-2017 VMware, Inc. All Rights Reserved.                    #
 #                                                                             #
 #  Licensed under the BSD 2-Clause License (the “License”); you may not use   #
 #  this file except in compliance with the License.                           #
@@ -29,47 +29,31 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-import logging
-import socket
+
+import unittest
+
+import mock
+
+from liota.dccs.graphite import Graphite
 from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
 
-log = logging.getLogger(__name__)
 
-class SocketDccComms(DCCComms):
+class TestDCCGraphite(unittest.TestCase):
 
-    CONN_TIMEOUT = 0
+    def test_graphite_dcc_init_fail_without_DCCComms(self):
+        with self.assertRaises(Exception):
+            g = Graphite("asd")
+            assert not isinstance(g, Graphite)
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
+        with self.assertRaises(Exception):
+            # noinspection PyArgumentList
+            g = Graphite()
+            assert g is None
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
+    def test_graphite_dcc_init_takes_DCCComms(self):
+        mock_dccc = mock.create_autospec(DCCComms)
+        g = Graphite(mock_dccc)
+        assert isinstance(g, Graphite)
 
-    def _disconnect(self):
-        raise NotImplementedError
-
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
-
-    def receive(self):
-        raise NotImplementedError
+if __name__ == '__main__':
+    unittest.main()
