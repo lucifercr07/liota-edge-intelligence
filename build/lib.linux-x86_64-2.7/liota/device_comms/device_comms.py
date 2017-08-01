@@ -29,45 +29,38 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
 
-log = logging.getLogger(__name__)
+from abc import ABCMeta, abstractmethod
 
-class SocketDccComms(DCCComms):
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
+class DeviceComms:
+
+    """
+    Abstract base class for all device communications.
+    """
+    __metaclass__ = ABCMeta
+
+    #-----------------------------------------------------------------------
+    # If a specific DeviceComms has parameters to establish connection, pass
+    # them to its constructor, not self._connect. Keep self._connect free of
+    # external arguments.
+    #
+    @abstractmethod
+    def __init__(self):
         self._connect()
 
+    @abstractmethod
     def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
+        pass
 
+    @abstractmethod
     def _disconnect(self):
-        raise NotImplementedError
+        pass
 
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
+    @abstractmethod
+    def send(self, message):
+        pass
 
+    @abstractmethod
     def receive(self):
-        raise NotImplementedError
+        pass

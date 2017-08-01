@@ -29,45 +29,76 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
+import json
 import logging
 import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
+import time
+
+from liota.dev_sims.device_simulator import DeviceSimulator
 
 log = logging.getLogger(__name__)
 
-class SocketDccComms(DCCComms):
-
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
+class SocketSimulator(DeviceSimulator):
+    """
+    SocketSimulator does inter-process communication (IPC), and
+    sends simulated device beacon message.
+    """
+    def __init__(self, ip_port, name, simulator):
+        super(SocketSimulator, self).__init__(name=name)
+        str_list = ip_port.split(':')
+        self.ip = str_list[0]
+        if str_list[1] == "" or str_list[1] == None:
+            log.error("No port is specified!")
+            return
+        self.port = int(str_list[1])
+        self.simulator = simulator # backpoint to simulator obj
         self._connect()
 
     def _connect(self):
-        self.client = socket.socket()
+        self.sock = socket.socket()
         log.info("Establishing Socket Connection")
         try:
-            self.client.connect((self.ip, self.port))
+            self.sock.connect((self.ip, self.port))
             log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
+        except Exception as ex:
+            log.exception(
+                "Unable to establish socket connection. Please check the firewall rules and try again.")
+            self.sock.close()
+            self.sock = None
             raise ex
+        log.debug("SocketSimulator is initialized")
+        print "SocketSimulator is initialized"
+        self.cnt = 0
+        self.flag_alive = True
+        self.start()
 
-    def _disconnect(self):
-        raise NotImplementedError
+    def clean_up(self):
+        self.flag_alive = False
+        self.sock.close()
 
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
+    def send(self, message):
+        self.sock.send(message)
 
-    def receive(self):
-        raise NotImplementedError
+    def run(self):
+        log.info('SocketSimulator is running...')
+        print 'SocketSimulator is running...'
+        while self.flag_alive:
+            msg = {
+                "LM35": {
+                    "k1": "v1",
+                    "SN": "0",
+                    "kn": "vn"
+                }
+            }
+            if self.cnt >= 5:
+                time.sleep(1000);
+            else:
+                msg["LM35"]["SN"] = str(self.cnt)
+                log.debug("send msg:{0}".format(msg))
+                self.sock.sendall(json.dumps(msg))
+                time.sleep(5)
+            self.cnt += 1
+            if self.cnt > 20:
+                self.flag = False
+        log.info('closing %s connection socket %s'.format(self.ip, self.sock))
+        self.sock.close()

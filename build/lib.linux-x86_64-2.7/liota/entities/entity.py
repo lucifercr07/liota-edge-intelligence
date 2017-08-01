@@ -29,45 +29,22 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
 
-log = logging.getLogger(__name__)
+from abc import ABCMeta, abstractmethod
+from liota.entities.registered_entity import RegisteredEntity
 
-class SocketDccComms(DCCComms):
+class Entity:
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
+    """
+    Abstract base class for all entities.
+    """
+    __metaclass__ = ABCMeta
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
-
-    def _disconnect(self):
-        raise NotImplementedError
-
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
-
-    def receive(self):
-        raise NotImplementedError
+    @abstractmethod
+    def __init__(self, name, entity_id, entity_type):
+        if not isinstance(name, basestring) \
+                or not isinstance(entity_type, basestring):
+            raise TypeError()
+        self.name = name
+        self.entity_id = entity_id
+        self.entity_type = entity_type

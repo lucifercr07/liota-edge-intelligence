@@ -29,45 +29,29 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
 
-log = logging.getLogger(__name__)
+from abc import ABCMeta, abstractmethod
+from liota.entities.entity import Entity
 
-class SocketDccComms(DCCComms):
+class Device(Entity):
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
+    """
+    Abstract base class for all devices (things).
+    """
+    __metaclass__ = ABCMeta
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
-
-    def _disconnect(self):
-        raise NotImplementedError
-
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
-
-    def receive(self):
-        raise NotImplementedError
+    #-----------------------------------------------------------------------
+    # Constructor of Device is not made abstract, so developer can create a
+    # plain device if that device does not have any specific method/data.
+    #
+    # It is possible to instantiate this class if no abstract method exists,
+    # even if it has ABCMeta as its meta-class.
+    #
+    # Add @abstractmethod if this is not what we want.
+    #
+    def __init__(self, name, entity_id, entity_type="Device"):
+        super(Device, self).__init__(
+            name=name,
+            entity_id=entity_id,
+            entity_type=entity_type
+        )

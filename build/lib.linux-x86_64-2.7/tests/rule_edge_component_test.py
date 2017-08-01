@@ -29,45 +29,58 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
 
-log = logging.getLogger(__name__)
+import unittest
+from liota.edge_component.rule_edge_component import RuleEdgeComponent
 
-class SocketDccComms(DCCComms):
+def action_actuator():
+	pass
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
+ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
+exceed_limit = 1
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
+class TestRuleEdgeComponent(unittest.TestCase):
+	
+	def test_RuleEdgeComponent_fail_without_valid_modelRule(self):
+		#Fails if no argument pass
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent()
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+		
+		#Fails if not valid Model rule passed
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent("asd", exceed_limit, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-    def _disconnect(self):
-        raise NotImplementedError
+		#Fails if lambda function not passed as ModelRule
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(action_actuator, exceed_limit, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
+	def test_RuleEdgeComponent_takes_valid_modelRule(self):
+		
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
 
-    def receive(self):
-        raise NotImplementedError
+	def test_RuleEdgeComponent_fail_with_invalidArg_exceedLimit(self):
+		#Fails if int not passed as exceed_limit
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(ModelRule, 2.0, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+
+	def test_RuleEdgeComponent_takes_validArg_exceedLimit(self):
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
+
+	def test_RuleEdgeComponent_fails_without_valid_actionActuator(self):
+		#Fails if action_actuator not of function type
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(ModelRule, exceed_limit, "asd")
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+
+	def test_RuleEdgeComponent_takes_valid_actionActuator(self):
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
+
+if __name__ == '__main__':
+	unittest.main()

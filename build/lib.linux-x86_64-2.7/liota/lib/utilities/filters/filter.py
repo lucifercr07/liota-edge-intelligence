@@ -29,45 +29,33 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
+
+from abc import ABCMeta, abstractmethod
 import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
 
 log = logging.getLogger(__name__)
 
-class SocketDccComms(DCCComms):
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
+class Filter:
+    """
+    Abstract base class for all Filters.
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
+    Filtering can reduce network bandwidth by trimming off data that we are not interested in.  Also, most of the
+    time systems will be working normally.  Sending all those normal data to DCC is not desired most of the time,
+    as there is always storage and processing overhead involved.
+    """
+    __metaclass__ = ABCMeta
 
-    def _disconnect(self):
-        raise NotImplementedError
+    @abstractmethod
+    def __init__(self):
+        pass
 
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
+    @abstractmethod
+    def filter(self, v):
+        """
+        Child classes must implement appropriate filtering logic.
 
-    def receive(self):
-        raise NotImplementedError
+        :param v: Collected value by sampling function.
+        :return: Filtered value or None
+        """
+        pass

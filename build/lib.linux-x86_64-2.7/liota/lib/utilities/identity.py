@@ -29,45 +29,30 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
+
 import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
 
 log = logging.getLogger(__name__)
 
-class SocketDccComms(DCCComms):
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
+class Identity:
+    """
+    This class encapsulates certificates and credentials related to a connection both at Dcc and Device side.
+    """
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
-
-    def _disconnect(self):
-        raise NotImplementedError
-
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
-
-    def receive(self):
-        raise NotImplementedError
+    def __init__(self, root_ca_cert, username, password, cert_file, key_file):
+        """
+        :param root_ca_cert: Root CA certificate path or Self-signed server certificate path
+        :param username: Username
+        :param password: Corresponding password
+        :param cert_file: Device certificate file path
+        :param key_file: Device certificate key-file path
+        """
+        self.root_ca_cert = root_ca_cert
+        self.username = username
+        self.password = password
+        self.cert_file = cert_file
+        self.key_file = key_file
+        log.debug("Created Identity with rootCA path: {0}, username: {1}, device_cert_path: {2}"
+                  "device_key_file_path: {3}".format(self.root_ca_cert, self.username, self.cert_file,
+                                                     self.key_file))

@@ -35,7 +35,7 @@ from liota.dccs.graphite import Graphite
 from liota.dcc_comms.socket_comms import SocketDccComms 
 from liota.entities.metrics.metric import Metric 
 from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.rule_edge_component import RuleEdgeComponent 
+from liota.edge_component.lambda_edge_component_generalisation import RuleEdgeComponent 
 from liota.entities.edge_systems.dell5k_edge_system  import Dell5KEdgeSystem
 import random
 
@@ -110,8 +110,7 @@ if __name__ == '__main__':
 
 		rule_reg_vib_metric = graphite.register(rule_vib_metric)
 		rule_reg_vib_metric.start_collecting()
-		
-		
+
 		
 	except RegistrationFailure:
 		print "Registration to graphite failed"

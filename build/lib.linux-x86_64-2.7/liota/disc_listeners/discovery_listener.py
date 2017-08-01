@@ -29,45 +29,26 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-import logging
-import socket
-from liota.dcc_comms.dcc_comms import DCCComms
-from liota.dcc_comms.timeout_exceptions import timeoutException
 
-log = logging.getLogger(__name__)
+from abc import ABCMeta, abstractmethod
+from threading import Thread
 
-class SocketDccComms(DCCComms):
+class DiscoveryListener(Thread):
+    """
+    DiscoveryListener is ABC (abstract base class) of all listening classes.
+    Developers should extend DiscoveryListener class and implement the abstract methods.
+    """
 
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self._connect()
+    __metaclass__ = ABCMeta
 
-    def _connect(self):
-        self.client = socket.socket()
-        log.info("Establishing Socket Connection")
-        try:
-            self.client.connect((self.ip, self.port))
-            log.info("Socket Created")
-        except Exception as ex: 
-            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
-            self.client.close()
-            self.client = None
-            raise ex
+    @abstractmethod
+    def __init__(self, name):
+        Thread.__init__(self, name=name)
 
-    def _disconnect(self):
+    @abstractmethod
+    def run(self):
         raise NotImplementedError
 
-    def send(self, message, msg_attr=None):
-        log.debug("Publishing message:" + str(message))
-        if self.client is not None:
-            try:
-                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
-            except Exception as ex:
-                log.exception("Data not sent")
-                self.client.close()
-                self.client = None
-                return timeoutException
-
-    def receive(self):
+    @abstractmethod
+    def clean_up(self):
         raise NotImplementedError
