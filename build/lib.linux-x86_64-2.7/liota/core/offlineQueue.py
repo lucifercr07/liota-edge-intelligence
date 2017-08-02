@@ -32,7 +32,8 @@ class offlineQueue:
 			self.d.append(data)
 		else:									#for deque with drop_newest=1
 			if len(self.d) is self.size:
-				log.info("Message dropped: {}".format(data))
+				log.info("Message dropped: {}".format(self.d.pop()))
+				self.d.append(data)
 			else:
 				self.d.append(data)
 
