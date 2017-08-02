@@ -62,7 +62,7 @@ def get_vibration():
 	return round(random.uniform(0.480,0.7),3)
 
 def get_temp():
-	return round(random.uniform(2.0,7.0),2)
+	return round(random.uniform(33.0,40.0),2)
 
 def action_actuator(value):
 	print value
@@ -90,10 +90,11 @@ if __name__ == '__main__':
 		
 		rpm_limit=45
 		vib_limit = 0.500
-		ModelRule = lambda rpm,vib : 1 if (rpm>=rpm_limit and vib>=vib_limit) else 0
+		temp_limit =35.00
+		ModelRule = lambda rpm,vib,temp : 1 if (rpm>=rpm_limit and vib>=vib_limit and temp>=temp_limit) else 0
 		exceed_limit = 1								#number of consecutive times a limit can be exceeded
 
-		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, actuator_udm=action_actuator)
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit,'temp', actuator_udm=action_actuator)
 		graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080),edge_component)
 		reg_edge_system = graphite.register(edge_system)
 		
@@ -110,6 +111,17 @@ if __name__ == '__main__':
 
 		rule_reg_vib_metric = graphite.register(rule_vib_metric)
 		rule_reg_vib_metric.start_collecting()
+
+		rule_temp_metric = Metric(
+			name="temp",
+			unit=None,
+			interval=3,
+			aggregation_size=1,
+			sampling_function=get_temp
+		)
+
+		rule_reg_temp_metric = graphite.register(rule_temp_metric)
+		rule_reg_temp_metric.start_collecting()
 
 		
 	except RegistrationFailure:

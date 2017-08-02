@@ -46,7 +46,7 @@ import Queue
 log = logging.getLogger(__name__)
 
 class RuleEdgeComponent(EdgeComponent):
-	def __init__(self, model_rule, exceed_limit_consecutive, actuator_udm):
+	def __init__(self, model_rule, exceed_limit_consecutive, highest_interval_metric, actuator_udm):
 		if model_rule is None:
 			raise TypeError("Model rule must be specified.")
 
@@ -63,6 +63,7 @@ class RuleEdgeComponent(EdgeComponent):
 		self.no_args = model_rule.__code__.co_argcount
 		self.actuator_udm = actuator_udm
 		self.exceed_limit = exceed_limit_consecutive
+		self.highest_interval_metric = highest_interval_metric
 		self.counter = 0
 		self.metric_list = []
 		self.metrics_action = {}
@@ -108,7 +109,7 @@ class RuleEdgeComponent(EdgeComponent):
 		if met_cnt == 1:						
 			m = reg_metric.values.get(block=True)
 			self.metrics_action[reg_metric.ref_entity.name].put(m[1])
-			if not self.metrics_action['vib'].empty(): #we can check according to the interval one with highest interval as soon it gets fill start append
+			if not self.metrics_action[self.highest_interval_metric].empty(): #we can check according to the interval one with highest interval as soon it gets fill start append
 				for i in range(self.no_args):
 					self.metric_list.append(self.metrics_action[inspect.getargspec(self.model_rule)[0][i]].get())
 		if len(self.metric_list)!= self.no_args:
