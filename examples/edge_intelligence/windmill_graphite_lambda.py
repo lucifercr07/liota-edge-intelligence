@@ -38,6 +38,7 @@ from liota.dccs.dcc import RegistrationFailure
 from liota.edge_component.lambda_edge_component_generalisation import RuleEdgeComponent 
 from liota.entities.edge_systems.dell5k_edge_system  import Dell5KEdgeSystem
 import random
+import time
 
 config = {}
 execfile('../sampleProp.conf', config)
@@ -57,7 +58,7 @@ def read_mem_free():
 
 def get_rpm():
 	return random.randint(42,54)
-
+		
 def get_vibration():
 	return round(random.uniform(0.480,0.7),3)
 
@@ -94,7 +95,7 @@ if __name__ == '__main__':
 		ModelRule = lambda rpm,vib,temp : 1 if (rpm>=rpm_limit and vib>=vib_limit and temp>=temp_limit) else 0
 		exceed_limit = 1								#number of consecutive times a limit can be exceeded
 
-		edge_component = RuleEdgeComponent(ModelRule, exceed_limit,'temp', actuator_udm=action_actuator)
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit,'temp',actuator_udm=action_actuator)
 		graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080),edge_component)
 		reg_edge_system = graphite.register(edge_system)
 		

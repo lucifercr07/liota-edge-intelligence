@@ -31,62 +31,87 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-from liota.dccs.dcc import DataCenterComponent
-from liota.entities.metrics.registered_metric import RegisteredMetric
-from liota.entities.metrics.metric import Metric
-from liota.entities.registered_entity import RegisteredEntity
-from liota.edge_component.edge_component import EdgeComponent
-from liota.lib.utilities.utility import getUTCmillis 
+import os
+import sys
+import time
+import can
+from random import randint
 
 log = logging.getLogger(__name__)
 
+class Can:
+	'''
+		CAN implementation for LIOTA. It uses python-can internally.
+	'''
+	def __init__(self, channel=None, can_filters=None, bustype=None, listeners=None, bus=None):
+		
+		self.channel =  channel
+		self.bustype = bustype
+		self.can_filters = can_filters
+		self.listeners = listeners
 
-class Graphite(DataCenterComponent):
-    def __init__(self, comms, edge_component=None, persistent_storage=False):
-        super(Graphite, self).__init__(
-            comms=comms,persistent_storage=persistent_storage
-        )
-        self.edge_component = edge_component
+	def connect(self):
+		self.bus = can.interface.Bus(bustype=self.bustype, channel=self.channel) 
+		log.info("Connected to Can Bus")
 
+	def send(self, arbitration_id, data, extended_id):
+		message = can.Message(arbitration_id=arbitration_id, data=data, extended_id=extended_id)  
+		try:
+			self.bus.send(message)
+			print("Message sent on {}".format(self.bus.channel_info))
+		except can.CanError:
+			print("Message not sent")
+			log.error("Message not sent over channel")
 
-    def register(self, entity_obj):
-        log.info("Registering resource with Graphite DCC {0}".format(entity_obj.name))
-        if isinstance(entity_obj, Metric):
-            return RegisteredMetric(entity_obj, self, None)
-        else:
-            return RegisteredEntity(entity_obj, self, None)
+		
+	def recv(self, timeout):
+		return self.bus.recv(timeout=timeout)
+	
+	def set_filters(self):
+		self.bus.set_filters(self.can_filters)
+	
+	def flush_tx_buffer(self):
+		self.bus.flush_tx_buffer()
 
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        reg_entity_child.parent = reg_entity_parent
+	def send_periodic(self, data, arbitration_id, extended_id, period, duration=None):
+		'''
+		:param float period:
+			Period in seconds between each message
+		:param float duration:
+			The duration to keep sending this message at given rate. If
+			no duration is provided, the task will continue indefinitely.
 
-    def _format_data(self, reg_metric):
-        if isinstance(self.edge_component, EdgeComponent):
-            message = self.edge_component._format_data(reg_metric)
-            if message is not None:
-                return message
-            else:
-                return None
+		:return: A started task instance
+		:rtype: can.CyclicSendTaskABC
+		'''
+		message = can.Message(arbitration_id=arbitration_id, data=data, extended_id=extended_id)
+		task = can.send_periodic(message, period, duration)
+		assert isinstance(task, can.CyclicSendTaskABC)
+		return task
 
-        else: 
-            met_cnt = reg_metric.values.qsize()
-            message = ''
-            if met_cnt == 0:
-                return
-            for _ in range(met_cnt):
-                v = reg_metric.values.get(block=True)
-                if v is not None:
-                    # Graphite expects time in seconds, not milliseconds. Hence,
-                    # dividing by 1000
-                    message += '%s %s %d\n' % (reg_metric.ref_entity.name,
-                                               v[1], v[0] / 1000)
-            if message == '':
-                return
-            log.info ("Publishing values to Graphite DCC")
-            log.debug("Formatted message: {0}".format(message))
-        return message
+	def shutdown(self):
+		self.bus.shutdown()
+	
+	def stop(self):
+		pass
 
-    def set_properties(self, reg_entity, properties):
-        raise NotImplementedError
+class CanMessagingAttributes:
 
-    def unregister(self, entity_obj):
-        raise NotImplementedError
+	def __init__(self, pub_timestamp=0.0, arbitration_id=0, extended_id=True, is_remote_frame=False,
+				is_error_frame=False, dlc=None):
+
+		self.arbitration_id = arbitration_id
+		self.extended_id = extended_id
+
+		self.pub_timestamp = pub_timestamp
+		self.arbitration_id = arbitration_id
+		self.id_type = extended_id
+		self.is_remote_frame = is_remote_frame
+		self.is_error_frame = is_error_frame
+  
+	
+	
+
+				 
+
+	

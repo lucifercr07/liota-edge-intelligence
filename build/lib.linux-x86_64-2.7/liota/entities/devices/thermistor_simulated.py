@@ -30,63 +30,77 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
-from liota.dccs.dcc import DataCenterComponent
-from liota.entities.metrics.registered_metric import RegisteredMetric
-from liota.entities.metrics.metric import Metric
-from liota.entities.registered_entity import RegisteredEntity
-from liota.edge_component.edge_component import EdgeComponent
-from liota.lib.utilities.utility import getUTCmillis 
-
-log = logging.getLogger(__name__)
+import threading
+import time
+import random
+import pint
+from liota.entities.devices.device import Device
+from liota.lib.utilities.utility import systemUUID
 
 
-class Graphite(DataCenterComponent):
-    def __init__(self, comms, edge_component=None, persistent_storage=False):
-        super(Graphite, self).__init__(
-            comms=comms,persistent_storage=persistent_storage
+class ThermistorSimulated(Device):
+
+    def __init__(self, name, u=5.0, r0=3000, interval=5, ureg=None):
+        super(ThermistorSimulated, self).__init__(
+            name=name,
+            entity_id=systemUUID().get_uuid(name),
+            entity_type="ThermistorSimulated"
         )
-        self.edge_component = edge_component
 
-
-    def register(self, entity_obj):
-        log.info("Registering resource with Graphite DCC {0}".format(entity_obj.name))
-        if isinstance(entity_obj, Metric):
-            return RegisteredMetric(entity_obj, self, None)
+        self.u = u                  # Total voltage
+        self.r0 = r0                # Reference resistor
+        self.ux = self.u / 2        # Initial voltage on thermistor
+        self.c1 = 1.40e-3
+        self.c2 = 2.37e-4
+        self.c3 = 9.90e-8
+        self.interval = interval
+        self.ureg = None
+        if isinstance(ureg, pint.UnitRegistry):
+            self.ureg = ureg
         else:
-            return RegisteredEntity(entity_obj, self, None)
+            self.ureg = pint.UnitRegistry()
 
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        reg_entity_child.parent = reg_entity_parent
+    def run(self):
+        self.th = threading.Thread(target=self.simulate)
+        self.th.daemon = True
+        self.th.start()
 
-    def _format_data(self, reg_metric):
-        if isinstance(self.edge_component, EdgeComponent):
-            message = self.edge_component._format_data(reg_metric)
-            if message is not None:
-                return message
-            else:
-                return None
+    #-----------------------------------------------------------------------
+    # This method randomly changes some state variables in the model every a
+    # few seconds (as is defined as interval).
 
-        else: 
-            met_cnt = reg_metric.values.qsize()
-            message = ''
-            if met_cnt == 0:
-                return
-            for _ in range(met_cnt):
-                v = reg_metric.values.get(block=True)
-                if v is not None:
-                    # Graphite expects time in seconds, not milliseconds. Hence,
-                    # dividing by 1000
-                    message += '%s %s %d\n' % (reg_metric.ref_entity.name,
-                                               v[1], v[0] / 1000)
-            if message == '':
-                return
-            log.info ("Publishing values to Graphite DCC")
-            log.debug("Formatted message: {0}".format(message))
-        return message
+    def simulate(self):
+        while True:
+            # Sleep until next cycle
+            time.sleep(self.interval)
 
-    def set_properties(self, reg_entity, properties):
-        raise NotImplementedError
+            self.ux = min(
+                max(
+                    self.ux +
+                    random.uniform(-0.01, 0.01) * self.interval,
+                    1.5
+                ), 3.5
+            )
 
-    def unregister(self, entity_obj):
-        raise NotImplementedError
+    #-----------------------------------------------------------------------
+    # These methods are used to access the state of the simulated physical
+    # object. A typical caller is the sampling method for a metric in a Liota
+    # application.
+
+    def get_u(self):
+        return self.ureg.volt * self.u
+
+    def get_r0(self):
+        return self.ureg.ohm * self.r0
+
+    def get_ux(self):
+        return self.ureg.volt * self.ux
+
+    def get_c1(self):
+        return self.c1 / self.ureg.kelvin
+
+    def get_c2(self):
+        return self.c2 / self.ureg.kelvin
+
+    def get_c3(self):
+        return self.c3 / self.ureg.kelvin

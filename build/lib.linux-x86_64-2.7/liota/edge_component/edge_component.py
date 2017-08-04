@@ -31,62 +31,73 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-from liota.dccs.dcc import DataCenterComponent
+from abc import ABCMeta, abstractmethod
+
+from liota.entities.entity import Entity
 from liota.entities.metrics.registered_metric import RegisteredMetric
-from liota.entities.metrics.metric import Metric
-from liota.entities.registered_entity import RegisteredEntity
-from liota.edge_component.edge_component import EdgeComponent
-from liota.lib.utilities.utility import getUTCmillis 
 
 log = logging.getLogger(__name__)
 
 
-class Graphite(DataCenterComponent):
-    def __init__(self, comms, edge_component=None, persistent_storage=False):
-        super(Graphite, self).__init__(
-            comms=comms,persistent_storage=persistent_storage
-        )
-        self.edge_component = edge_component
+class EdgeComponent:
 
+    """
+    Abstract base class for all EdgeComponents.
+    """
+    __metaclass__ = ABCMeta
 
+    @abstractmethod
+    def __init__(self, model_path, actuator_udm):
+        self.model_path = model_path
+        self.actuator_udm = actuator_udm
+
+    # -----------------------------------------------------------------------
+    # Implement this method in subclasses and do actual registration.
+    #
+    # This method should return a RegisteredEntity if successful, or raise
+    # an exception if failed. Call this method from subclasses for a type
+    # check.
+    #
+
+    @abstractmethod
     def register(self, entity_obj):
-        log.info("Registering resource with Graphite DCC {0}".format(entity_obj.name))
-        if isinstance(entity_obj, Metric):
-            return RegisteredMetric(entity_obj, self, None)
-        else:
-            return RegisteredEntity(entity_obj, self, None)
+        if not isinstance(entity_obj, Entity):
+            log.error("Entity object is expected.")
+            raise TypeError("Entity object is expected.")
 
+    @abstractmethod
     def create_relationship(self, reg_entity_parent, reg_entity_child):
-        reg_entity_child.parent = reg_entity_parent
+        pass
 
+    @abstractmethod
     def _format_data(self, reg_metric):
-        if isinstance(self.edge_component, EdgeComponent):
-            message = self.edge_component._format_data(reg_metric)
-            if message is not None:
-                return message
-            else:
-                return None
+        pass
 
-        else: 
-            met_cnt = reg_metric.values.qsize()
-            message = ''
-            if met_cnt == 0:
-                return
-            for _ in range(met_cnt):
-                v = reg_metric.values.get(block=True)
-                if v is not None:
-                    # Graphite expects time in seconds, not milliseconds. Hence,
-                    # dividing by 1000
-                    message += '%s %s %d\n' % (reg_metric.ref_entity.name,
-                                               v[1], v[0] / 1000)
-            if message == '':
-                return
-            log.info ("Publishing values to Graphite DCC")
-            log.debug("Formatted message: {0}".format(message))
-        return message
+    @abstractmethod
+    def process(self, message):
+        pass
 
+    def publish(self, reg_metric):
+        if not isinstance(reg_metric, RegisteredMetric):
+            log.error("RegisteredMetric object is expected.")
+            raise TypeError("RegisteredMetric object is expected.")
+        self.process(self._format_data(reg_metric))
+
+    @abstractmethod
     def set_properties(self, reg_entity, properties):
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def unregister(self, entity_obj):
-        raise NotImplementedError
+        if not isinstance(entity_obj, Entity):
+            raise TypeError
+
+    @abstractmethod
+    def build_model(self):
+        pass
+
+    @abstractmethod
+    def load_model(self):
+        pass
+
+class RegistrationFailure(Exception): pass
