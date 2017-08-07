@@ -31,61 +31,50 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-from liota.dccs.dcc import DataCenterComponent
-from liota.entities.metrics.registered_metric import RegisteredMetric
-from liota.entities.metrics.metric import Metric
-from liota.entities.registered_entity import RegisteredEntity
+
 from liota.edge_component.edge_component import EdgeComponent
-from liota.lib.utilities.utility import getUTCmillis 
+import csv
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
 
 log = logging.getLogger(__name__)
 
-class Graphite(DataCenterComponent):
-    def __init__(self, comms, edge_component=None, persistent_storage=False):
-        super(Graphite, self).__init__(
-            comms=comms,persistent_storage=persistent_storage
-        )
-        self.edge_component = edge_component
 
+class FileReader(EdgeComponent):
+
+    def __init__(self, model_path, actuator_udm):
+        super(FileReader, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
+
+    def load_model(self):
+        log.info("Loading model..")
 
     def register(self, entity_obj):
-        log.info("Registering resource with Graphite DCC {0}".format(entity_obj.name))
         if isinstance(entity_obj, Metric):
             return RegisteredMetric(entity_obj, self, None)
         else:
             return RegisteredEntity(entity_obj, self, None)
 
     def create_relationship(self, reg_entity_parent, reg_entity_child):
-        reg_entity_child.parent = reg_entity_parent
+        pass
+
+    def process(self,message):
+        with open(self.model_path) as csvfile:
+            self.readCSV = csv.reader(csvfile, delimiter=',')
+            for row in self.readCSV:
+                self.actuator_udm(row)
 
     def _format_data(self, reg_metric):
-        if isinstance(self.edge_component, EdgeComponent):
-            message = self.edge_component._format_data(reg_metric)
-            if message is not None:
-                return message
-            else:
-                return None
-
-        else: 
-            met_cnt = reg_metric.values.qsize()
-            message = ''
-            if met_cnt == 0:
-                return
-            for _ in range(met_cnt):
-                v = reg_metric.values.get(block=True)
-                if v is not None:
-                    # Graphite expects time in seconds, not milliseconds. Hence,
-                    # dividing by 1000
-                    message += '%s %s %d\n' % (reg_metric.ref_entity.name,
-                                               v[1], v[0] / 1000)
-            if message == '':
-                return
-            log.info ("Publishing values to Graphite DCC")
-            log.debug("Formatted message: {0}".format(message))
-        return message
+        # TODO: get values out of reg_metric and return values
+        pass
 
     def set_properties(self, reg_entity, properties):
-        raise NotImplementedError
+        pass
 
     def unregister(self, entity_obj):
-        raise NotImplementedError
+        pass
+
+    def build_model(self):
+        pass

@@ -31,95 +31,79 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-import sqlite3
+from collections import deque
 import threading
 import time
 from liota.dcc_comms.dcc_comms import DCCComms
 
 log = logging.getLogger(__name__)
 
-class offline_database:
-	def __init__(self, table_name, comms=None, draining_frequency=0):
+class offlineQueue:
+	def __init__(self, size, drop_oldest, comms, draining_frequency=0):
 		"""
-			:param table_name: table_name in which message will be stored
+			:param size: size of the offline_queue, if negative implies infinite.
+			:param drop_oldest: if True oldest data will be dropped after size of queue is exceeded. 
 			:param comms: comms instance of DCCComms
 			:param draining_frequency: frequency with which data will be published after internet connectivity established.
 		"""
-		if not isinstance(table_name, basestring):
-			log.error("Table name should be a string.")
-			raise TypeError("Table name should be a string.")
+		if not isinstance(size, int):
+			log.error("Size is expected of int type.")
+			raise TypeError("Size is expected of int type.")
+		if not isinstance(drop_oldest, bool):
+			log.error("drop_oldest/newest is expected of bool type.")
+			raise TypeError("drop_oldest is expected of bool type.")
 		if not isinstance(comms, DCCComms):
 			log.error("DCCComms object is expected.")
 			raise TypeError("DCCComms object is expected.")
-		if not isinstance(draining_frequency, int):
-			log.error("draining_frequency is expected of int type.")
-			raise TypeError("draining_frequency is expected of int type.")
-		self.table_name = table_name
-		self.draining_frequency = draining_frequency
-		self.comms = comms
-		self.flag_conn_open = False
-		self._create_table()
-
-	def _create_table(self):
-		if self.flag_conn_open is False:
-			self.conn = sqlite3.connect('storage.db')
-			try:
-				with self.conn:
-					if not self.conn.execute("SELECT name FROM sqlite_master WHERE TYPE='table' AND name= ? ", (self.table_name,)).fetchone():
-						self.conn.text_factory = str
-						self.flag_conn_open = True
-						self.cursor = self.conn.cursor()
-						self.cursor.execute("CREATE TABLE "+self.table_name+" (Message TEXT)")
-						self.cursor.close()
-						del self.cursor
-					else:
-						self._drain()		
-						self._create_table()
-			except Exception as e:
-				raise e
-			finally:
-				self.flag_conn_open = False
-				self.conn.close()
-		#else:    where the data will be stored while connection is open
-
-
-	def add(self, message):
-		try:
-			self.conn = sqlite3.connect('storage.db')
-			self.flag_conn_open = True
-			with self.conn:
-				self.cursor = self.conn.cursor()
-				self.cursor.execute("INSERT INTO "+self.table_name+" VALUES (?);", (message,))
-				self.cursor.close()
-				del self.cursor
-		except sqlite3.OperationalError as e:
+		if not isinstance(draining_frequency, float) and not isinstance(draining_frequency, int):
+			log.error("draining_frequency is expected of float or int type.")
+			raise TypeError("draining_frequency is expected of float or int type.")
+		try: 
+			assert size!=0 and draining_frequency>=0
+		except AssertionError as e:
+			log.error("Size can't be zero, draining_frequency can't be negative.")
 			raise e
-		finally:
-			self.conn.close()
-			self.flag_conn_open = False
+		self.size = size
+		self.drop_oldest = drop_oldest
+		if (self.size>0 and drop_oldest):
+			self.d = deque(maxlen=self.size)
+		else:
+			self.d = deque()
+		self.comms = comms
+		self.draining_frequency = draining_frequency
+		self._offlineQLock = threading.Lock()
+		
+	def append(self, data):
+		if (self.size<0):	#for infinite length deque
+			self.d.append(data)
+		elif (self.size>0 and self.drop_oldest): #for deque with drop_oldest=True
+			if len(self.d) is self.size:
+				log.info("Message dropped: {}".format(self.d[0]))
+			self.d.append(data)
+		else:									#for deque with drop_oldest=False
+			if len(self.d) is self.size:
+				log.info("Message dropped: {}".format(data))
+			else:
+				self.d.append(data)
 
 	def _drain(self):
-		self.conn = sqlite3.connect('storage.db')
-		self.flag_conn_open = True
-		self.cursor = self.conn.cursor()
-		try:
-			with self.conn:
-				for row in self.cursor.execute("SELECT Message FROM "+self.table_name):
-					if self.comms is not None:
-						log.info("Data Drain: {}".format(row[0]))
-						self.comms.send(row[0])
-					time.sleep(self.draining_frequency)
-				self.cursor.execute("DROP TABLE IF EXISTS "+ self.table_name)
-				self.cursor.close()
-				del self.cursor
-		except Exception as e:
-			raise e
-		finally:
-			self.conn.close()
-			self.flag_conn_open = False		
+		self._offlineQLock.acquire()
+		while self.d:
+			data = self.d.pop()
+			log.info("Data Drain: {}".format(data))
+			self.comms.send(data)
+			if self.d:
+				data1 = self.d.popleft()
+				log.info("Data Drain: {}".format(data))
+				self.comms.send(data1)
+			time.sleep(self.draining_frequency)
+		self._offlineQLock.release()
 
 	def start_drain(self):
 		queueDrain = threading.Thread(target=self._drain)
 		queueDrain.daemon = True
 		queueDrain.start()
 		queueDrain.join()
+
+	def show(self):
+		print self.d

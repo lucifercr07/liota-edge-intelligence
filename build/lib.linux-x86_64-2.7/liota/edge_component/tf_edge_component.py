@@ -30,62 +30,61 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
+import tensorflow as tf
+import pandas as pd
+import itertools
 import logging
-from liota.dccs.dcc import DataCenterComponent
-from liota.entities.metrics.registered_metric import RegisteredMetric
-from liota.entities.metrics.metric import Metric
-from liota.entities.registered_entity import RegisteredEntity
+import numpy as np
 from liota.edge_component.edge_component import EdgeComponent
-from liota.lib.utilities.utility import getUTCmillis 
+from liota.entities.registered_entity import RegisteredEntity
+from liota.entities.edge_systems.edge_system import EdgeSystem
+from liota.entities.devices.device import Device
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
 
 log = logging.getLogger(__name__)
 
-class Graphite(DataCenterComponent):
-    def __init__(self, comms, edge_component=None, persistent_storage=False):
-        super(Graphite, self).__init__(
-            comms=comms,persistent_storage=persistent_storage
-        )
-        self.edge_component = edge_component
+class TensorFlowEdgeComponent(EdgeComponent):
+
+	def __init__(self, model_path, features, actuator_udm):
+		super(TensorFlowEdgeComponent, self).__init__(model_path, features, actuator_udm)
+		self.model = None
+		self.load_model(self.model_path)
+
+	def load_model(self,model_path):
+		with tf.Session() as sess:
+			feature_cols = [tf.contrib.layers.real_valued_column(k) for k in self.features]
+			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
+
+	def register(self, entity_obj):
+		if isinstance(entity_obj, Metric):
+			return RegisteredMetric(entity_obj, self, None)
+		else:
+			return RegisteredEntity(entity_obj, self, None)
+
+	def create_relationship(self, reg_entity_parent, reg_entity_child):
+		reg_entity_child.parent = reg_entity_parent
+
+	def process(self, message):
+		self.actuator_udm(list(self.model.predict(input_fn=message))) #Problem is here!!!
+
+	def _format_data(self, reg_metric):
+		met_cnt = reg_metric.values.qsize()
+		if met_cnt == 0:
+			return
+		for _ in range(met_cnt):
+			m = reg_metric.values.get(block=True)
+			if m is not None:
+				print("Message: ",m)
+				return np.array([m[1]]).reshape(-1, 1)
+
+	def set_properties(self, reg_entity, properties):
+		super(TensorFlowEdgeComponent, self).set_properties(reg_entity, properties)
+
+	def unregister(self, entity_obj):
+		pass
+
+	def build_model(self):
+		pass
 
 
-    def register(self, entity_obj):
-        log.info("Registering resource with Graphite DCC {0}".format(entity_obj.name))
-        if isinstance(entity_obj, Metric):
-            return RegisteredMetric(entity_obj, self, None)
-        else:
-            return RegisteredEntity(entity_obj, self, None)
-
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        reg_entity_child.parent = reg_entity_parent
-
-    def _format_data(self, reg_metric):
-        if isinstance(self.edge_component, EdgeComponent):
-            message = self.edge_component._format_data(reg_metric)
-            if message is not None:
-                return message
-            else:
-                return None
-
-        else: 
-            met_cnt = reg_metric.values.qsize()
-            message = ''
-            if met_cnt == 0:
-                return
-            for _ in range(met_cnt):
-                v = reg_metric.values.get(block=True)
-                if v is not None:
-                    # Graphite expects time in seconds, not milliseconds. Hence,
-                    # dividing by 1000
-                    message += '%s %s %d\n' % (reg_metric.ref_entity.name,
-                                               v[1], v[0] / 1000)
-            if message == '':
-                return
-            log.info ("Publishing values to Graphite DCC")
-            log.debug("Formatted message: {0}".format(message))
-        return message
-
-    def set_properties(self, reg_entity, properties):
-        raise NotImplementedError
-
-    def unregister(self, entity_obj):
-        raise NotImplementedError
