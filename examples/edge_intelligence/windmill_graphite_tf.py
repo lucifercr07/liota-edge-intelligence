@@ -129,7 +129,7 @@ def collecting_all_metrics():
     return list_of_metrics
 
 def get_rpm():
-    return random.randint(40,46)
+    return random.randint(10,25)
 
 def get_vibration():
     return random.uniform(0.300,0.600)
@@ -191,122 +191,14 @@ if __name__ == '__main__':
         reg_mem_free_metric = graphite.register(mem_free_metric)
         graphite.create_relationship(reg_edge_system, reg_mem_free_metric)
         reg_mem_free_metric.start_collecting()
-        '''
-        # Connects to the SensorTag device over BLE
-        sensor_tag_collector = SensorTagCollector(device_name=config['DeviceName'], device_mac=config['DeviceMac'],
-                                                  sampling_interval_sec=1, retry_interval_sec=5,
-                                                  sensors=[Sensors.TEMPERATURE, Sensors.HUMIDITY, Sensors.BAROMETER,
-                                                           Sensors.LIGHTMETER,
-                                                           Sensors.ACCELEROMETER, Sensors.GYROSCOPE])
-        sensor_tag = sensor_tag_collector.get_sensor_tag()
-        # Registering SensorTagDevice with graphite
-        reg_sensor_tag = graphite.register(sensor_tag)
-        graphite.create_relationship(reg_edge_system, reg_sensor_tag)
 
-        temperature_metric = Metric(
-            name="windmill.AmbientTemperature",
-            unit=ureg.degC,
-            interval=10,
-            aggregation_size=1,
-            sampling_function=lambda: get_ambient_temperature(sensor_tag_collector)
-        )
-        reg_temperature_metric = graphite.register(temperature_metric)
-        graphite.create_relationship(reg_sensor_tag, reg_temperature_metric)
-        reg_temperature_metric.start_collecting()
-
-        humidity_metric = Metric(
-            name="windmill.RelativeHumidity",
-            unit=None,
-            interval=10,
-            aggregation_size=1,
-            sampling_function=lambda: get_relative_humidity(sensor_tag_collector)
-        )
-        reg_humidity_metric = graphite.register(humidity_metric)
-        graphite.create_relationship(reg_sensor_tag, reg_humidity_metric)
-        reg_humidity_metric.start_collecting()
-
-        pressure_metric = Metric(
-            name="windmill.Pressure",
-            unit=ureg.Pa,
-            interval=10,
-            aggregation_size=1,
-            sampling_function=lambda: get_pressure(sensor_tag_collector)
-        )
-        reg_pressure_metric = graphite.register(pressure_metric)
-        graphite.create_relationship(reg_sensor_tag, reg_pressure_metric)
-        reg_pressure_metric.start_collecting()
-
-        light_metric = Metric(
-            name="windmill.LightLevel",
-            unit=ureg.lx,
-            interval=10,
-            aggregation_size=1,
-            sampling_function=lambda: get_light_level(sensor_tag_collector)
-        )
-        reg_light_metric = graphite.register(light_metric)
-        graphite.create_relationship(reg_sensor_tag, reg_light_metric)
-        reg_light_metric.start_collecting()
-
-        vibration_metric = Metric(
-            name="windmill.Vibration",
-            unit=None,
-            interval=10,
-            aggregation_size=1,
-            sampling_function=lambda: get_vibration_level(sensor_tag_collector)
-        )
-        reg_vibration_metric = graphite.register(vibration_metric)
-        graphite.create_relationship(reg_sensor_tag, reg_vibration_metric)
-        reg_vibration_metric.start_collecting()
-
-        rpm_metric = Metric(
-            name="windmill.RPM",
-            unit=None,
-            interval=0,
-            aggregation_size=1,
-            sampling_function=lambda: get_rpm(sensor_tag_collector)
-        )
-        reg_rpm_metric = graphite.register(rpm_metric)
-        graphite.create_relationship(reg_sensor_tag, reg_rpm_metric)
-        reg_rpm_metric.start_collecting()
-		'''
         tf_rpm_metric = Metric(
             name="windmill.RPM",
             unit=None,
-            interval=0,
+            interval=1,
             aggregation_size=1,
             sampling_function=get_rpm
         )
-        '''
-        tf_all_metrics = Metric(
-            name = "windmill_all_metrics",
-            unit=None,
-            interval=10,
-            aggregation_size=1, 
-            sampling_function=collecting_all_metrics
-        )
-        
-        #Model-Path can be edited in the sampleProp.conf file
-        #pass value to actuator as of now the action_actuator prints the value on the console
-        edge_component = TensorFlowEdgeComponent(config['ModelPath'],actuator_udm=action_actuator)
-
-        tf_reg_all_metrics = edge_component.register(tf_all_metrics)
-        tf_reg_all_metrics.start_collecting()
-        '''
-        tf_cpu_metric = Metric(
-            name="windmill.CPU_Utilization",
-            unit=None,
-            interval=1,
-            aggregation_size=1,
-            sampling_function=read_cpu_utilization
-        )
-
-        tf_two_metric = Metric(
-        	name="windmill.rpm",
-        	unit=None,
-        	interval=1,
-        	aggregation_size=1,
-        	sampling_function=collect_two_metrics
-        	)
 
         edge_component = TensorFlowEdgeComponent(config['ModelPath'], config['Features'], actuator_udm=action_actuator)
         tf_reg_two_metric = edge_component.register(tf_rpm_metric)
