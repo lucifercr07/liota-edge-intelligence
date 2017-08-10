@@ -30,63 +30,41 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import tensorflow as tf
-import logging
-import numpy as np
-from liota.edge_component.edge_component import EdgeComponent
-from liota.entities.registered_entity import RegisteredEntity
-from liota.entities.edge_systems.edge_system import EdgeSystem
-from liota.entities.devices.device import Device
-from liota.entities.metrics.metric import Metric
-from liota.entities.metrics.registered_metric import RegisteredMetric
+import unittest
+from liota.edge_component.pfa_component import PFAComponent
+from mock import patch
 
-log = logging.getLogger(__name__)
+def action_actuator():
+	pass
 
-class TensorFlowEdgeComponent(EdgeComponent):
+ModelPath = "/home/prasha/git_repo/liota_edge_intelligence/edge_intelligence_models/windmill-model/finalized_model.pfa"
 
-	def __init__(self, model_path, features=[""], actuator_udm=None):
-		self.model = None
-		self.features = features
-		self.model_path = model_path
-		self.actuator_udm = actuator_udm
-		self.load_model(self.model_path)
+class TestPFAComponent(unittest.TestCase):
+	
+	def test_PFAComponent_fails_without_valid_ModelPath(self):
+		with self.assertRaises(Exception):
+			edge_component = PFAComponent("/home/asd", "asd")
+			assertNotIsInstance(edge_component, PFAComponent)
 
-	def load_model(self,model_path):
-		with tf.Session() as sess:
-			feature_cols = [tf.contrib.layers.real_valued_column(k, dimension=1) for k in self.features]
-			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
-			
-	def register(self, entity_obj):
-		if isinstance(entity_obj, Metric):
-			return RegisteredMetric(entity_obj, self, None)
-		else:
-			return RegisteredEntity(entity_obj, self, None)
+	def test_PFAComponent_fails_without_valid_ModelPath(self):
+		with self.assertRaises(Exception):
+			edge_component = PFAComponent(ModelPath, "asd")
+			assert isinstance(edge_component, PFAComponent)
+		
+	def test_PFAComponent_fails_without_valid_actionActuator(self):
+		#Fails if action_actuator not of function type
+		with self.assertRaises(Exception):
+			edge_component = PFAComponent(ModelPath, "asd")
+			assertNotIsInstance(edge_component, PFAComponent)
 
-	def create_relationship(self, reg_entity_parent, reg_entity_child):
-		reg_entity_child.parent = reg_entity_parent
-
-	def input_fn(self, message):
-		return np.array([message], dtype=np.float32)
-
-	def process(self, message):
-		self.actuator_udm(list(self.model.predict_classes(input_fn=lambda:self.input_fn(message))))
-
-	def _format_data(self, reg_metric):
-		met_cnt = reg_metric.values.qsize()
-		if met_cnt == 0:
-			return
-		for _ in range(met_cnt):
-			m = reg_metric.values.get(block=True)
-			if m is not None:
-				return m[1]
-
-	def set_properties(self, reg_entity, properties):
-		super(TensorFlowEdgeComponent, self).set_properties(reg_entity, properties)
-
-	def unregister(self, entity_obj):
-		pass
-
-	def build_model(self):
-		pass
-
-
+	def test_PFAComponent_takes_valid_actionActuator(self):
+		edge_component = PFAComponent(ModelPath, action_actuator)
+		assert isinstance(edge_component, PFAComponent)
+'''
+	def test_PFAComponent_actionActuator_called(self, mock):
+		edge_component = RuleEdgeComponent(ModelPath, action_actuator)
+		edge_component.process(message)
+		self.assertTrue(mock.called)
+'''
+if __name__ == '__main__':
+	unittest.main()

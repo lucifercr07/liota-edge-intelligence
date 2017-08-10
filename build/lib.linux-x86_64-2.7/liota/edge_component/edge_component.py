@@ -30,63 +30,74 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import tensorflow as tf
 import logging
-import numpy as np
-from liota.edge_component.edge_component import EdgeComponent
-from liota.entities.registered_entity import RegisteredEntity
-from liota.entities.edge_systems.edge_system import EdgeSystem
-from liota.entities.devices.device import Device
-from liota.entities.metrics.metric import Metric
+from abc import ABCMeta, abstractmethod
+
+from liota.entities.entity import Entity
 from liota.entities.metrics.registered_metric import RegisteredMetric
 
 log = logging.getLogger(__name__)
 
-class TensorFlowEdgeComponent(EdgeComponent):
 
-	def __init__(self, model_path, features=[""], actuator_udm=None):
-		self.model = None
-		self.features = features
-		self.model_path = model_path
-		self.actuator_udm = actuator_udm
-		self.load_model(self.model_path)
+class EdgeComponent:
 
-	def load_model(self,model_path):
-		with tf.Session() as sess:
-			feature_cols = [tf.contrib.layers.real_valued_column(k, dimension=1) for k in self.features]
-			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
-			
-	def register(self, entity_obj):
-		if isinstance(entity_obj, Metric):
-			return RegisteredMetric(entity_obj, self, None)
-		else:
-			return RegisteredEntity(entity_obj, self, None)
+    """
+    Abstract base class for all EdgeComponents.
+    """
+    __metaclass__ = ABCMeta
 
-	def create_relationship(self, reg_entity_parent, reg_entity_child):
-		reg_entity_child.parent = reg_entity_parent
+    @abstractmethod
+    def __init__(self, model_path, actuator_udm):
+        self.model_path = model_path
+        self.actuator_udm = actuator_udm
 
-	def input_fn(self, message):
-		return np.array([message], dtype=np.float32)
+    # -----------------------------------------------------------------------
+    # Implement this method in subclasses and do actual registration.
+    #
+    # This method should return a RegisteredEntity if successful, or raise
+    # an exception if failed. Call this method from subclasses for a type
+    # check.
+    #
 
-	def process(self, message):
-		self.actuator_udm(list(self.model.predict_classes(input_fn=lambda:self.input_fn(message))))
+    @abstractmethod
+    def register(self, entity_obj):
+        if not isinstance(entity_obj, Entity):
+            log.error("Entity object is expected.")
+            raise TypeError("Entity object is expected.")
 
-	def _format_data(self, reg_metric):
-		met_cnt = reg_metric.values.qsize()
-		if met_cnt == 0:
-			return
-		for _ in range(met_cnt):
-			m = reg_metric.values.get(block=True)
-			if m is not None:
-				return m[1]
+    @abstractmethod
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
 
-	def set_properties(self, reg_entity, properties):
-		super(TensorFlowEdgeComponent, self).set_properties(reg_entity, properties)
+    @abstractmethod
+    def _format_data(self, reg_metric):
+        pass
 
-	def unregister(self, entity_obj):
-		pass
+    @abstractmethod
+    def process(self, message):
+        pass
 
-	def build_model(self):
-		pass
+    def publish(self, reg_metric):
+        if not isinstance(reg_metric, RegisteredMetric):
+            log.error("RegisteredMetric object is expected.")
+            raise TypeError("RegisteredMetric object is expected.")
+        self.process(self._format_data(reg_metric))
 
+    @abstractmethod
+    def set_properties(self, reg_entity, properties):
+        pass
 
+    @abstractmethod
+    def unregister(self, entity_obj):
+        if not isinstance(entity_obj, Entity):
+            raise TypeError
+
+    @abstractmethod
+    def build_model(self):
+        pass
+
+    @abstractmethod
+    def load_model(self):
+        pass
+
+class RegistrationFailure(Exception): pass

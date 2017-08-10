@@ -30,63 +30,57 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import tensorflow as tf
 import logging
-import numpy as np
+
 from liota.edge_component.edge_component import EdgeComponent
-from liota.entities.registered_entity import RegisteredEntity
-from liota.entities.edge_systems.edge_system import EdgeSystem
-from liota.entities.devices.device import Device
+import csv
 from liota.entities.metrics.metric import Metric
 from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
+import titus.prettypfa
+import json
+from titus.genpy import PFAEngine
 
 log = logging.getLogger(__name__)
 
-class TensorFlowEdgeComponent(EdgeComponent):
 
-	def __init__(self, model_path, features=[""], actuator_udm=None):
-		self.model = None
-		self.features = features
-		self.model_path = model_path
-		self.actuator_udm = actuator_udm
-		self.load_model(self.model_path)
+class PFAComponent(EdgeComponent):
 
-	def load_model(self,model_path):
-		with tf.Session() as sess:
-			feature_cols = [tf.contrib.layers.real_valued_column(k, dimension=1) for k in self.features]
-			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
-			
-	def register(self, entity_obj):
-		if isinstance(entity_obj, Metric):
-			return RegisteredMetric(entity_obj, self, None)
-		else:
-			return RegisteredEntity(entity_obj, self, None)
+    def __init__(self, model_path, actuator_udm):
+        super(PFAComponent, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
 
-	def create_relationship(self, reg_entity_parent, reg_entity_child):
-		reg_entity_child.parent = reg_entity_parent
+    def load_model(self):
+        log.info("Loading model..")
+        self.model, = PFAEngine.fromJson(json.load(open(self.model_path)))
 
-	def input_fn(self, message):
-		return np.array([message], dtype=np.float32)
+    def register(self, entity_obj):
+        if isinstance(entity_obj, Metric):
+            return RegisteredMetric(entity_obj, self, None)
+        else:
+            return RegisteredEntity(entity_obj, self, None)
 
-	def process(self, message):
-		self.actuator_udm(list(self.model.predict_classes(input_fn=lambda:self.input_fn(message))))
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
 
-	def _format_data(self, reg_metric):
-		met_cnt = reg_metric.values.qsize()
-		if met_cnt == 0:
-			return
-		for _ in range(met_cnt):
-			m = reg_metric.values.get(block=True)
-			if m is not None:
-				return m[1]
+    def process(self,message):
+        self.actuator_udm(self.model.action(message))
 
-	def set_properties(self, reg_entity, properties):
-		super(TensorFlowEdgeComponent, self).set_properties(reg_entity, properties)
+    def _format_data(self, reg_metric):
+        met_cnt = reg_metric.values.qsize()
+        if met_cnt == 0:
+            return
+        for _ in range(met_cnt):
+            m = reg_metric.values.get(block=True)
+            if m is not None:
+                return m[1]
 
-	def unregister(self, entity_obj):
-		pass
+    def set_properties(self, reg_entity, properties):
+        pass
 
-	def build_model(self):
-		pass
+    def unregister(self, entity_obj):
+        pass
 
-
+    def build_model(self):
+        pass

@@ -30,63 +30,88 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import tensorflow as tf
 import logging
-import numpy as np
-from liota.edge_component.edge_component import EdgeComponent
-from liota.entities.registered_entity import RegisteredEntity
-from liota.entities.edge_systems.edge_system import EdgeSystem
-from liota.entities.devices.device import Device
-from liota.entities.metrics.metric import Metric
-from liota.entities.metrics.registered_metric import RegisteredMetric
+import os
+import sys
+import time
+import can
+from random import randint
 
 log = logging.getLogger(__name__)
 
-class TensorFlowEdgeComponent(EdgeComponent):
+class Can:
+	'''
+		CAN implementation for LIOTA. It uses python-can internally.
+	'''
+	def __init__(self, channel=None, can_filters=None, bustype=None, listeners=None, bus=None):
+		
+		self.channel =  channel
+		self.bustype = bustype
+		self.can_filters = can_filters
+		self.listeners = listeners
 
-	def __init__(self, model_path, features=[""], actuator_udm=None):
-		self.model = None
-		self.features = features
-		self.model_path = model_path
-		self.actuator_udm = actuator_udm
-		self.load_model(self.model_path)
+	def connect(self):
+		self.bus = can.interface.Bus(bustype=self.bustype, channel=self.channel) 
+		log.info("Connected to Can Bus")
 
-	def load_model(self,model_path):
-		with tf.Session() as sess:
-			feature_cols = [tf.contrib.layers.real_valued_column(k, dimension=1) for k in self.features]
-			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
-			
-	def register(self, entity_obj):
-		if isinstance(entity_obj, Metric):
-			return RegisteredMetric(entity_obj, self, None)
-		else:
-			return RegisteredEntity(entity_obj, self, None)
+	def send(self, arbitration_id, data, extended_id):
+		message = can.Message(arbitration_id=arbitration_id, data=data, extended_id=extended_id)  
+		try:
+			self.bus.send(message)
+			print("Message sent on {}".format(self.bus.channel_info))
+		except can.CanError:
+			print("Message not sent")
+			log.error("Message not sent over channel")
 
-	def create_relationship(self, reg_entity_parent, reg_entity_child):
-		reg_entity_child.parent = reg_entity_parent
+		
+	def recv(self, timeout):
+		return self.bus.recv(timeout=timeout)
+	
+	def set_filters(self):
+		self.bus.set_filters(self.can_filters)
+	
+	def flush_tx_buffer(self):
+		self.bus.flush_tx_buffer()
 
-	def input_fn(self, message):
-		return np.array([message], dtype=np.float32)
+	def send_periodic(self, data, arbitration_id, extended_id, period, duration=None):
+		'''
+		:param float period:
+			Period in seconds between each message
+		:param float duration:
+			The duration to keep sending this message at given rate. If
+			no duration is provided, the task will continue indefinitely.
 
-	def process(self, message):
-		self.actuator_udm(list(self.model.predict_classes(input_fn=lambda:self.input_fn(message))))
+		:return: A started task instance
+		:rtype: can.CyclicSendTaskABC
+		'''
+		message = can.Message(arbitration_id=arbitration_id, data=data, extended_id=extended_id)
+		task = can.send_periodic(message, period, duration)
+		assert isinstance(task, can.CyclicSendTaskABC)
+		return task
 
-	def _format_data(self, reg_metric):
-		met_cnt = reg_metric.values.qsize()
-		if met_cnt == 0:
-			return
-		for _ in range(met_cnt):
-			m = reg_metric.values.get(block=True)
-			if m is not None:
-				return m[1]
-
-	def set_properties(self, reg_entity, properties):
-		super(TensorFlowEdgeComponent, self).set_properties(reg_entity, properties)
-
-	def unregister(self, entity_obj):
+	def shutdown(self):
+		self.bus.shutdown()
+	
+	def stop(self):
 		pass
 
-	def build_model(self):
-		pass
+class CanMessagingAttributes:
 
+	def __init__(self, pub_timestamp=0.0, arbitration_id=0, extended_id=True, is_remote_frame=False,
+				is_error_frame=False, dlc=None):
 
+		self.arbitration_id = arbitration_id
+		self.extended_id = extended_id
+
+		self.pub_timestamp = pub_timestamp
+		self.arbitration_id = arbitration_id
+		self.id_type = extended_id
+		self.is_remote_frame = is_remote_frame
+		self.is_error_frame = is_error_frame
+  
+	
+	
+
+				 
+
+	

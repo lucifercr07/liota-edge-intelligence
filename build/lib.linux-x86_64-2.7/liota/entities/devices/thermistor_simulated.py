@@ -30,63 +30,77 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import tensorflow as tf
-import logging
-import numpy as np
-from liota.edge_component.edge_component import EdgeComponent
-from liota.entities.registered_entity import RegisteredEntity
-from liota.entities.edge_systems.edge_system import EdgeSystem
+import threading
+import time
+import random
+import pint
 from liota.entities.devices.device import Device
-from liota.entities.metrics.metric import Metric
-from liota.entities.metrics.registered_metric import RegisteredMetric
-
-log = logging.getLogger(__name__)
-
-class TensorFlowEdgeComponent(EdgeComponent):
-
-	def __init__(self, model_path, features=[""], actuator_udm=None):
-		self.model = None
-		self.features = features
-		self.model_path = model_path
-		self.actuator_udm = actuator_udm
-		self.load_model(self.model_path)
-
-	def load_model(self,model_path):
-		with tf.Session() as sess:
-			feature_cols = [tf.contrib.layers.real_valued_column(k, dimension=1) for k in self.features]
-			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
-			
-	def register(self, entity_obj):
-		if isinstance(entity_obj, Metric):
-			return RegisteredMetric(entity_obj, self, None)
-		else:
-			return RegisteredEntity(entity_obj, self, None)
-
-	def create_relationship(self, reg_entity_parent, reg_entity_child):
-		reg_entity_child.parent = reg_entity_parent
-
-	def input_fn(self, message):
-		return np.array([message], dtype=np.float32)
-
-	def process(self, message):
-		self.actuator_udm(list(self.model.predict_classes(input_fn=lambda:self.input_fn(message))))
-
-	def _format_data(self, reg_metric):
-		met_cnt = reg_metric.values.qsize()
-		if met_cnt == 0:
-			return
-		for _ in range(met_cnt):
-			m = reg_metric.values.get(block=True)
-			if m is not None:
-				return m[1]
-
-	def set_properties(self, reg_entity, properties):
-		super(TensorFlowEdgeComponent, self).set_properties(reg_entity, properties)
-
-	def unregister(self, entity_obj):
-		pass
-
-	def build_model(self):
-		pass
+from liota.lib.utilities.utility import systemUUID
 
 
+class ThermistorSimulated(Device):
+
+    def __init__(self, name, u=5.0, r0=3000, interval=5, ureg=None):
+        super(ThermistorSimulated, self).__init__(
+            name=name,
+            entity_id=systemUUID().get_uuid(name),
+            entity_type="ThermistorSimulated"
+        )
+
+        self.u = u                  # Total voltage
+        self.r0 = r0                # Reference resistor
+        self.ux = self.u / 2        # Initial voltage on thermistor
+        self.c1 = 1.40e-3
+        self.c2 = 2.37e-4
+        self.c3 = 9.90e-8
+        self.interval = interval
+        self.ureg = None
+        if isinstance(ureg, pint.UnitRegistry):
+            self.ureg = ureg
+        else:
+            self.ureg = pint.UnitRegistry()
+
+    def run(self):
+        self.th = threading.Thread(target=self.simulate)
+        self.th.daemon = True
+        self.th.start()
+
+    #-----------------------------------------------------------------------
+    # This method randomly changes some state variables in the model every a
+    # few seconds (as is defined as interval).
+
+    def simulate(self):
+        while True:
+            # Sleep until next cycle
+            time.sleep(self.interval)
+
+            self.ux = min(
+                max(
+                    self.ux +
+                    random.uniform(-0.01, 0.01) * self.interval,
+                    1.5
+                ), 3.5
+            )
+
+    #-----------------------------------------------------------------------
+    # These methods are used to access the state of the simulated physical
+    # object. A typical caller is the sampling method for a metric in a Liota
+    # application.
+
+    def get_u(self):
+        return self.ureg.volt * self.u
+
+    def get_r0(self):
+        return self.ureg.ohm * self.r0
+
+    def get_ux(self):
+        return self.ureg.volt * self.ux
+
+    def get_c1(self):
+        return self.c1 / self.ureg.kelvin
+
+    def get_c2(self):
+        return self.c2 / self.ureg.kelvin
+
+    def get_c3(self):
+        return self.c3 / self.ureg.kelvin

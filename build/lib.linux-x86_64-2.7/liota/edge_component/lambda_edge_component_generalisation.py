@@ -30,32 +30,47 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import tensorflow as tf
 import logging
-import numpy as np
 from liota.edge_component.edge_component import EdgeComponent
 from liota.entities.registered_entity import RegisteredEntity
 from liota.entities.edge_systems.edge_system import EdgeSystem
 from liota.entities.devices.device import Device
 from liota.entities.metrics.metric import Metric
 from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.lib.utilities.utility import getUTCmillis
+import json
+import inspect
+import types
+import Queue
 
 log = logging.getLogger(__name__)
 
-class TensorFlowEdgeComponent(EdgeComponent):
+class RuleEdgeComponent(EdgeComponent):
+	def __init__(self, model_rule, exceed_limit_consecutive, highest_interval_metric, actuator_udm):
+		if model_rule is None:
+			raise TypeError("Model rule must be specified.")
 
-	def __init__(self, model_path, features=[""], actuator_udm=None):
-		self.model = None
-		self.features = features
-		self.model_path = model_path
+		if not isinstance(model_rule, types.LambdaType):
+			raise TypeError("Model rule must be a lambda function.")
+
+		if model_rule.__name__ != "<lambda>":
+			raise TypeError("Model rule must be a lambda function.")			
+
+		if type(exceed_limit_consecutive) is not int:
+			raise ValueError("exceed_limit should be a integer value.")
+
+		self.model_rule = model_rule
+		self.no_args = model_rule.__code__.co_argcount
 		self.actuator_udm = actuator_udm
-		self.load_model(self.model_path)
+		self.exceed_limit = exceed_limit_consecutive
+		self.highest_interval_metric = highest_interval_metric
+		self.timeout = 0
+		self.timeout_occured = False
+		self.metric_list = []				#to pass values b/w _format_data and process
+		self.metrics_action = {}			#map containing queues of metric_names
+		for i in range(self.no_args):
+			self.metrics_action[inspect.getargspec(self.model_rule)[0][i]] = Queue.Queue()
 
-	def load_model(self,model_path):
-		with tf.Session() as sess:
-			feature_cols = [tf.contrib.layers.real_valued_column(k, dimension=1) for k in self.features]
-			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
-			
 	def register(self, entity_obj):
 		if isinstance(entity_obj, Metric):
 			return RegisteredMetric(entity_obj, self, None)
@@ -63,30 +78,67 @@ class TensorFlowEdgeComponent(EdgeComponent):
 			return RegisteredEntity(entity_obj, self, None)
 
 	def create_relationship(self, reg_entity_parent, reg_entity_child):
-		reg_entity_child.parent = reg_entity_parent
-
-	def input_fn(self, message):
-		return np.array([message], dtype=np.float32)
+		pass 	
 
 	def process(self, message):
-		self.actuator_udm(list(self.model.predict_classes(input_fn=lambda:self.input_fn(message))))
+		if message is not None:
+			self.metric_list=[]
+			print "Message in process: ", message
+			metrics_message = {}		#stores all the metric data and action taken corres. to them
+			if self.timeout_occured:
+				self.timeout_occured = False
+				log.warning("No action taken, all metrics not available.")	
+				#can't return data as we don't know which metric has not got its value, it may be rpm, may be any metric, we are not checking for it
+				print "All metrics are not available, please check the metric collecting sensors."
+				return None
+				#raise MyException("All metrics are not available, please check the metric collecting sensors.")
+			else:
+				result = self.model_rule(*message)
+				counter=0
+				counter = 0 if(result==0) else counter+1
+				if(counter>=self.exceed_limit):
+					self.actuator_udm(1)
+					metrics_message['result'] = 1
+					self.counter=0
+				else:
+					self.actuator_udm(0)
+					metrics_message['result'] = 0
+				for i in range(self.no_args):
+					metric_name = str(inspect.getargspec(self.model_rule)[0][i])
+					metrics_message[metric_name] = message[i]
+				metrics_message['timestamp'] = getUTCmillis()
+				json_data = json.dumps(metrics_message)
+				return json_data
 
 	def _format_data(self, reg_metric):
 		met_cnt = reg_metric.values.qsize()
 		if met_cnt == 0:
 			return
-		for _ in range(met_cnt):
+		if met_cnt == 1:						
 			m = reg_metric.values.get(block=True)
-			if m is not None:
-				return m[1]
-
-	def set_properties(self, reg_entity, properties):
-		super(TensorFlowEdgeComponent, self).set_properties(reg_entity, properties)
-
-	def unregister(self, entity_obj):
-		pass
+			self.metrics_action[reg_metric.ref_entity.name].put(m[1])
+			if not self.metrics_action[self.highest_interval_metric].empty(): #we can check according to the interval one with highest interval as soon it gets fill start append
+				for i in range(self.no_args):
+					self.metric_list.append(self.metrics_action[inspect.getargspec(self.model_rule)[0][i]].get())
+		if len(self.metric_list)!= self.no_args:
+			if (reg_metric.ref_entity.name==self.highest_interval_metric):#if metric with highest interval has come, still all metric not available thus timeout
+				self.timeout_occured = True
+				return self.process(self.metric_list)	
+			return None
+		else:
+			return self.process(self.metric_list)	
 
 	def build_model(self):
+		pass	
+
+	def load_model(self):
 		pass
 
+	def set_properties(self, reg_entity, properties):
+		pass
 
+	def unregister(self):
+		pass
+
+class MyException(Exception):
+	pass
