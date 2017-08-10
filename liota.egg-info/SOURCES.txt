@@ -80,7 +80,7 @@ liota/edge_component/lambda_edge_component_generalisation.py
 liota/edge_component/pfa_component.py
 liota/edge_component/rule_edge_component.py
 liota/edge_component/sklearn_edge_component.py
-liota/edge_component/tf_edge_component.py
+liota/edge_component/tensorflow_edge_component.py
 liota/entities/__init__.py
 liota/entities/entity.py
 liota/entities/registered_entity.py

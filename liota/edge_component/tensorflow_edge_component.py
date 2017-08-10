@@ -44,7 +44,7 @@ log = logging.getLogger(__name__)
 
 class TensorFlowEdgeComponent(EdgeComponent):
 
-	def __init__(self, model_path, features, actuator_udm):
+	def __init__(self, model_path, features=None, actuator_udm=None):
 		self.model = None
 		self.features = features
 		self.model_path = model_path
@@ -69,7 +69,7 @@ class TensorFlowEdgeComponent(EdgeComponent):
 		return np.array([message], dtype=np.float32)
 
 	def process(self, message):
-		self.actuator_udm(list(self.model.predict(input_fn=lambda:self.input_fn(message))))
+		self.actuator_udm(list(self.model.predict_classes(input_fn=lambda:self.input_fn(message))))
 
 	def _format_data(self, reg_metric):
 		met_cnt = reg_metric.values.qsize()

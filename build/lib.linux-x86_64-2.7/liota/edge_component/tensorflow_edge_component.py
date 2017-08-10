@@ -30,61 +30,63 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import math
-import Queue
-import random
-
-from liota.dccs.graphite import Graphite
+import tensorflow as tf
+import logging
+import numpy as np
+from liota.edge_component.edge_component import EdgeComponent
+from liota.entities.registered_entity import RegisteredEntity
+from liota.entities.edge_systems.edge_system import EdgeSystem
+from liota.entities.devices.device import Device
 from liota.entities.metrics.metric import Metric
-from liota.entities.edge_systems.dell5k_edge_system import Dell5KEdgeSystem
-from liota.dcc_comms.socket_comms import SocketDccComms
-from liota.dccs.dcc import RegistrationFailure
-from liota.edge_component.tensorflow_edge_component import TensorFlowEdgeComponent 
+from liota.entities.metrics.registered_metric import RegisteredMetric
 
-# getting values from conf file
-config = {}
-execfile('../sampleProp.conf', config)
+log = logging.getLogger(__name__)
 
-def action_actuator(value):
-    print value
+class TensorFlowEdgeComponent(EdgeComponent):
 
-def get_rpm():
-    return random.randint(10,25)
+	def __init__(self, model_path, features=None, actuator_udm=None):
+		self.model = None
+		self.features = features
+		self.model_path = model_path
+		self.actuator_udm = actuator_udm
+		self.load_model(self.model_path)
 
-def get_vibration():
-    return round(random.uniform(0.480,0.7),3)
+	def load_model(self,model_path):
+		with tf.Session() as sess:
+			feature_cols = [tf.contrib.layers.real_valued_column("", dimension=1)]
+			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
+			
+	def register(self, entity_obj):
+		if isinstance(entity_obj, Metric):
+			return RegisteredMetric(entity_obj, self, None)
+		else:
+			return RegisteredEntity(entity_obj, self, None)
 
-# ---------------------------------------------------------------------------------------
-# In this example, we demonstrate how metrics collected from a SensorTag device over BLE
-# can be directed to graphite data center component using Liota.
-# The program illustrates the ease of use Liota brings to IoT application developers.
+	def create_relationship(self, reg_entity_parent, reg_entity_child):
+		reg_entity_child.parent = reg_entity_parent
 
-if __name__ == '__main__':
+	def input_fn(self, message):
+		return np.array([message], dtype=np.float32)
 
-    # create a data center object, graphite in this case, using websocket as a transport layer
-    graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],
-                                       port=8080))
+	def process(self, message):
+		self.actuator_udm(list(self.model.predict_classes(input_fn=lambda:self.input_fn(message))))
 
-    try:
-        # create a System object encapsulating the particulars of a IoT System
-        # argument is the name of this IoT System
-        edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
+	def _format_data(self, reg_metric):
+		met_cnt = reg_metric.values.qsize()
+		if met_cnt == 0:
+			return
+		for _ in range(met_cnt):
+			m = reg_metric.values.get(block=True)
+			if m is not None:
+				return m[1]
 
-        # resister the IoT System with the graphite instance
-        # this call creates a representation (a Resource) in graphite for this IoT System with the name given
-        reg_edge_system = graphite.register(edge_system)
-        
-        tf_rpm_metric = Metric(
-            name="windmill.RPM",
-            unit=None,
-            interval=1,
-            aggregation_size=1,
-            sampling_function=get_rpm
-        )
+	def set_properties(self, reg_entity, properties):
+		super(TensorFlowEdgeComponent, self).set_properties(reg_entity, properties)
 
-        edge_component = TensorFlowEdgeComponent(config['ModelPath'], actuator_udm=action_actuator)
-        tf_reg_two_metric = edge_component.register(tf_rpm_metric)
-        tf_reg_two_metric.start_collecting()
+	def unregister(self, entity_obj):
+		pass
 
-    except RegistrationFailure:
-        print "Registration to graphite failed"
+	def build_model(self):
+		pass
+
+
