@@ -29,77 +29,33 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-
 import logging
-from collections import deque
-import threading
-import time
+import Queue
+from liota.lib.transports.web_socket import WebSocket
+
 from liota.dcc_comms.dcc_comms import DCCComms
+
 
 log = logging.getLogger(__name__)
 
-class offlineQueue:
-	def __init__(self, size, comms, drop_oldest=True, draining_frequency=0):
-		"""
-			:param size: size of the offline_queue, if negative implies infinite.
-			:param drop_oldest: if True oldest data will be dropped after size of queue is exceeded. 
-			:param comms: comms instance of DCCComms
-			:param draining_frequency: frequency with which data will be published after internet connectivity established.
-		"""
-		if not isinstance(size, int):
-			log.error("Size is expected of int type.")
-			raise TypeError("Size is expected of int type.")
-		if not isinstance(comms, DCCComms):
-			log.error("DCCComms object is expected.")
-			raise TypeError("DCCComms object is expected.")
-		if not isinstance(drop_oldest, bool):
-			log.error("drop_oldest/newest is expected of bool type.")
-			raise TypeError("drop_oldest is expected of bool type.")
-		if not isinstance(draining_frequency, float) and not isinstance(draining_frequency, int):
-			log.error("draining_frequency is expected of float or int type.")
-			raise TypeError("draining_frequency is expected of float or int type.")
-		try: 
-			assert size!=0 and draining_frequency>=0
-		except AssertionError as e:
-			log.error("Size can't be zero, draining_frequency can't be negative.")
-			raise e("Size can't be zero, draining_frequency can't be negative.")
-		self.size = size
-		self.drop_oldest = drop_oldest
-		if (self.size>0 and drop_oldest):
-			self.d = deque(maxlen=self.size)
-		else:
-			self.d = deque()
-		self.comms = comms
-		self.draining_frequency = draining_frequency
-		self._offlineQLock = threading.Lock()
-		
-	def append(self, data):
-		if (self.size<0):	#for infinite length deque
-			self.d.append(data)
-		elif (self.size>0 and self.drop_oldest): #for deque with drop_oldest=True
-			if len(self.d) is self.size:
-				log.info("Message dropped: {}".format(self.d[0]))
-			self.d.append(data)
-		else:									#for deque with drop_oldest=False
-			if len(self.d) is self.size:
-				log.info("Message dropped: {}".format(data))
-			else:
-				self.d.append(data)
 
-	def _drain(self):
-		self._offlineQLock.acquire()
-		while self.d:
-			data = self.d.pop()
-			log.info("Data Drain: {}".format(data))
-			self.comms.send(data)
-			time.sleep(self.draining_frequency)
-		self._offlineQLock.release()
+class WebSocketDccComms(DCCComms):
 
-	def start_drain(self):
-		queueDrain = threading.Thread(target=self._drain)
-		queueDrain.daemon = True
-		queueDrain.start()
-		queueDrain.join()
+    def __init__(self, url, verify_cert, identity=None):
+        self.url = url
+        self.verify_cert = verify_cert
+        self.identity = identity
+        self.userdata = Queue.Queue()
+        self._connect()
 
-	def show(self):
-		print self.d
+    def _connect(self):
+        self.client = WebSocket(self.url, self.verify_cert, self.identity)
+
+    def _disconnect(self):
+        raise NotImplementedError
+
+    def send(self, message, msg_attr=None):
+        self.client.send(message)
+
+    def receive(self, msg_attr=None):
+        self.client.receive(self.userdata)
