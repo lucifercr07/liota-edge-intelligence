@@ -65,6 +65,7 @@ class offline_database:
 		self.counter = 0
 		self.flag_conn_open = False
 		self.draining_in_progress = False
+		self._offline_db_lock = threading.Lock()
 		self._create_table()
 
 	def _create_table(self):
@@ -105,6 +106,7 @@ class offline_database:
 			self.flag_conn_open = False
 
 	def _drain(self):
+		self._offline_db_lock.acquire()
 		self.conn = sqlite3.connect('storage.db')
 		self.flag_conn_open = True
 		self.draining_in_progress = True
@@ -131,9 +133,9 @@ class offline_database:
 			self.conn.close()
 			self.flag_conn_open = False	
 			self.draining_in_progress = False	
+		self._offline_db_lock.release()
 
 	def start_drain(self):
 		queueDrain = threading.Thread(target=self._drain)
 		queueDrain.daemon = True
 		queueDrain.start()
-		queueDrain.join()

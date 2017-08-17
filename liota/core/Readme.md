@@ -3,6 +3,7 @@ If the client faces network disconnectivity, publish message can be stored as a 
 
 # Example
 Suppose we want to create a persistent storage, while creating instance of DCC, we would pass the ```persistent_storage``` parameter as ```True```. 
+By default ```persistent_storage``` parameter is set as ```True```
 ```
 graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080),persistent_storage=True)
 ```
