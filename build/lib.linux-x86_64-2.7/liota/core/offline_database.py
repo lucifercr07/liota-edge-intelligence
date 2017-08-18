@@ -119,8 +119,6 @@ class offline_database:
 						print "Data drained: ",row[0]
 						try:
 							self.comms.send(row[0])
-							self.cursor.execute("DELETE FROM "+ self.table_name+" WHERE Message LIKE %" +row[0] +"%")
-							self.cursor.commit()
 						except Exception as e:
 							log.info("Internet connectivity broke while draining")
 							raise e("Internet connectivity broke while draining")
@@ -130,6 +128,7 @@ class offline_database:
 						log.info("Internet connectivity broke while draining")
 						raise e("Internet connectivity broke again.")
 					time.sleep(self.draining_frequency)
+				self.cursor.execute("DROP TABLE IF EXISTS "+ self.table_name)
 				self.cursor.close()
 				del self.cursor
 		except Exception as e:

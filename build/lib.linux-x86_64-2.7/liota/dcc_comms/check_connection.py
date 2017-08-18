@@ -4,7 +4,7 @@ import time
 from liota.dcc_comms.timeout_exceptions import timeoutException
 
 class checkConnection: 
-	def __init__(self, interval=1.0, hostname = "8.8.8.8"):
+	def __init__(self, interval=1.0, hostname = "google.com"):
 		self.interval = interval
 		self.hostname = hostname
 		self.check = 1

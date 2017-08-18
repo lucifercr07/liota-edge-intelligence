@@ -29,61 +29,76 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-
+import json
 import logging
-from liota.dccs.dcc import DataCenterComponent
-from liota.entities.metrics.registered_metric import RegisteredMetric
-from liota.entities.metrics.metric import Metric
-from liota.entities.registered_entity import RegisteredEntity
-from liota.edge_component.edge_component import EdgeComponent
-from liota.lib.utilities.utility import getUTCmillis 
+import socket
+import time
+
+from liota.dev_sims.device_simulator import DeviceSimulator
 
 log = logging.getLogger(__name__)
 
-class Graphite(DataCenterComponent):
-    def __init__(self, comms, edge_component=None, persistent_storage=True):
-        super(Graphite, self).__init__(
-            comms=comms,persistent_storage=persistent_storage
-        )
-        self.edge_component = edge_component
+class SocketSimulator(DeviceSimulator):
+    """
+    SocketSimulator does inter-process communication (IPC), and
+    sends simulated device beacon message.
+    """
+    def __init__(self, ip_port, name, simulator):
+        super(SocketSimulator, self).__init__(name=name)
+        str_list = ip_port.split(':')
+        self.ip = str_list[0]
+        if str_list[1] == "" or str_list[1] == None:
+            log.error("No port is specified!")
+            return
+        self.port = int(str_list[1])
+        self.simulator = simulator # backpoint to simulator obj
+        self._connect()
 
-    def register(self, entity_obj):
-        log.info("Registering resource with Graphite DCC {0}".format(entity_obj.name))
-        if isinstance(entity_obj, Metric):
-            return RegisteredMetric(entity_obj, self, None)
-        else:
-            return RegisteredEntity(entity_obj, self, None)
+    def _connect(self):
+        self.sock = socket.socket()
+        log.info("Establishing Socket Connection")
+        try:
+            self.sock.connect((self.ip, self.port))
+            log.info("Socket Created")
+        except Exception as ex:
+            log.exception(
+                "Unable to establish socket connection. Please check the firewall rules and try again.")
+            self.sock.close()
+            self.sock = None
+            raise ex
+        log.debug("SocketSimulator is initialized")
+        print "SocketSimulator is initialized"
+        self.cnt = 0
+        self.flag_alive = True
+        self.start()
 
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        reg_entity_child.parent = reg_entity_parent
+    def clean_up(self):
+        self.flag_alive = False
+        self.sock.close()
 
-    def _format_data(self, reg_metric):
-        if isinstance(self.edge_component, EdgeComponent):
-            message = self.edge_component._format_data(reg_metric)
-            if message is not None:
-                return message
+    def send(self, message):
+        self.sock.send(message)
+
+    def run(self):
+        log.info('SocketSimulator is running...')
+        print 'SocketSimulator is running...'
+        while self.flag_alive:
+            msg = {
+                "LM35": {
+                    "k1": "v1",
+                    "SN": "0",
+                    "kn": "vn"
+                }
+            }
+            if self.cnt >= 5:
+                time.sleep(1000);
             else:
-                return None
-        else: 
-            met_cnt = reg_metric.values.qsize()
-            message = ''
-            if met_cnt == 0:
-                return
-            for _ in range(met_cnt):
-                v = reg_metric.values.get(block=True)
-                if v is not None:
-                    # Graphite expects time in seconds, not milliseconds. Hence,
-                    # dividing by 1000
-                    message += '%s %s %d\n' % (reg_metric.ref_entity.name,
-                                               v[1], v[0] / 1000)
-            if message == '':
-                return
-            log.info ("Publishing values to Graphite DCC")
-            log.debug("Formatted message: {0}".format(message))
-        return message
-
-    def set_properties(self, reg_entity, properties):
-        raise NotImplementedError
-
-    def unregister(self, entity_obj):
-        raise NotImplementedError
+                msg["LM35"]["SN"] = str(self.cnt)
+                log.debug("send msg:{0}".format(msg))
+                self.sock.sendall(json.dumps(msg))
+                time.sleep(5)
+            self.cnt += 1
+            if self.cnt > 20:
+                self.flag = False
+        log.info('closing %s connection socket %s'.format(self.ip, self.sock))
+        self.sock.close()

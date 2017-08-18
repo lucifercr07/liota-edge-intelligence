@@ -44,6 +44,7 @@ from liota.core.offline_database import offline_database
 log = logging.getLogger(__name__)
 
 class DataCenterComponent:
+
     """
     Abstract base class for all DCCs.
     """
@@ -112,9 +113,13 @@ class DataCenterComponent:
                     else:
                         self.comms.send(message, None)
                 except Exception as e:
-                    raise e
+                    log.warning("Internet connectivity broke.")
+                    if self.persistent_storage is True:
+                        table_name = self.__name__ + type(self.comms).__name__
+                        self._start_database_storage(table_name, message)
+                    else:
+                        self._start_queuing(message)
             else:                                       #if no internet connectivity
-                self.offline_buffering_enabled = True
                 if self.persistent_storage is True:
                     table_name = self.__class__.__name__ + type(self.comms).__name__
                     self._start_database_storage(table_name, message)
@@ -123,11 +128,13 @@ class DataCenterComponent:
                 
     def _start_queuing(self, message):
         if self.offline_buffering_enabled  is False:
+            self.offline_buffering_enabled = True
             self.offlineQ = offlineQueue(size=-1, drop_oldest=True, comms=self.comms, draining_frequency=1) #drop_oldest can be either zero or one, can't be both
         self.offlineQ.append(message)
 
     def _start_database_storage(self, table_name, message):
         if self.offline_buffering_enabled  is False:
+            self.offline_buffering_enabled = True
             try:
                 if self.offline_database.draining_in_progress:
                     self.offline_database.add(message)
