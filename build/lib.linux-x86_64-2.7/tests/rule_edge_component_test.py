@@ -30,60 +30,57 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
-from liota.dccs.dcc import DataCenterComponent
-from liota.entities.metrics.registered_metric import RegisteredMetric
-from liota.entities.metrics.metric import Metric
-from liota.entities.registered_entity import RegisteredEntity
-from liota.edge_component.edge_component import EdgeComponent
-from liota.lib.utilities.utility import getUTCmillis 
+import unittest
+from liota.edge_component.rule_edge_component import RuleEdgeComponent
 
-log = logging.getLogger(__name__)
+def action_actuator():
+	pass
 
-class Graphite(DataCenterComponent):
-    def __init__(self, comms, edge_component=None, persistent_storage=False):
-        super(Graphite, self).__init__(
-            comms=comms,persistent_storage=persistent_storage
-        )
-        self.edge_component = edge_component
+ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
+exceed_limit = 1
 
-    def register(self, entity_obj):
-        log.info("Registering resource with Graphite DCC {0}".format(entity_obj.name))
-        if isinstance(entity_obj, Metric):
-            return RegisteredMetric(entity_obj, self, None)
-        else:
-            return RegisteredEntity(entity_obj, self, None)
+class TestRuleEdgeComponent(unittest.TestCase):
+	
+	def test_RuleEdgeComponent_fail_without_valid_modelRule(self):
+		#Fails if no argument pass
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent()
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+		
+		#Fails if not valid Model rule passed
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent("asd", exceed_limit, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        reg_entity_child.parent = reg_entity_parent
+		#Fails if lambda function not passed as ModelRule
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(action_actuator, exceed_limit, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-    def _format_data(self, reg_metric):
-        if isinstance(self.edge_component, EdgeComponent):
-            message = self.edge_component._format_data(reg_metric)
-            if message is not None:
-                return message
-            else:
-                return None
-        else: 
-            met_cnt = reg_metric.values.qsize()
-            message = ''
-            if met_cnt == 0:
-                return
-            for _ in range(met_cnt):
-                v = reg_metric.values.get(block=True)
-                if v is not None:
-                    # Graphite expects time in seconds, not milliseconds. Hence,
-                    # dividing by 1000
-                    message += '%s %s %d\n' % (reg_metric.ref_entity.name,
-                                               v[1], v[0] / 1000)
-            if message == '':
-                return
-            log.info ("Publishing values to Graphite DCC")
-            log.debug("Formatted message: {0}".format(message))
-        return message
+	def test_RuleEdgeComponent_takes_valid_modelRule(self):
+		
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
 
-    def set_properties(self, reg_entity, properties):
-        raise NotImplementedError
+	def test_RuleEdgeComponent_fail_with_invalidArg_exceedLimit(self):
+		#Fails if int not passed as exceed_limit
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(ModelRule, 2.0, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-    def unregister(self, entity_obj):
-        raise NotImplementedError
+	def test_RuleEdgeComponent_takes_validArg_exceedLimit(self):
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
+
+	def test_RuleEdgeComponent_fails_without_valid_actionActuator(self):
+		#Fails if action_actuator not of function type
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(ModelRule, exceed_limit, "asd")
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+
+	def test_RuleEdgeComponent_takes_valid_actionActuator(self):
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
+
+if __name__ == '__main__':
+	unittest.main()
