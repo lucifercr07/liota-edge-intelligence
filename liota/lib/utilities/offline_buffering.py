@@ -35,9 +35,10 @@ import logging
 log = logging.getLogger(__name__)
 
 class Buffering:
-	def __init__(self, queue_size, persistent_storage=False, data_drain_size=1, drop_oldest=True, draining_frequency=1):
+	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=1, drop_oldest=True, draining_frequency=1):
 		self.persistent_storage = persistent_storage
 		self.queue_size = queue_size
 		self.data_drain_size = data_drain_size
 		self.drop_oldest = drop_oldest
 		self.draining_frequency = draining_frequency
+
