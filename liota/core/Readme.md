@@ -3,8 +3,8 @@ If the client faces network disconnectivity, publish message can be stored as a 
 You can also specify data_drain_size which speicifes ow much data will be drained at once after the internet connectivity is established again. By default both are set to 1.
 
 # Example
-Suppose we want to create a persistent storage, while creating instance of DCC, we would pass the ```persistent_storage``` parameter as ```True```. 
-By default ```persistent_storage``` parameter is set as ```True```
+Suppose we want to create a persistent storage, while creating instance of DCC, we would pass the an instance of Buffering class along with it. 
+
 ```
 buffering = Buffering(persistent_storage=True, data_drain_size=10, draining_frequency=1)
 graphite = Graphite(SocketDccComms(ip=config['GraphiteIP'],port=8080), 
@@ -17,10 +17,10 @@ In case of ```persistent_storage``` as ```False``` the queueing mechanism will b
 ```
 buffering = Buffering(queue_size=-1,data_drain_size=10, draining_frequency=1)
 ```
-will create a queueing mechanism with infinite size and drop_behaviour need not be set in this case, data_drain_size and draining_frequency can be any positive integer.
+will create a queueing mechanism with infinite size and drop_behaviour by default is true, data_drain_size and draining_frequency can be any positive integer.
 For queue with size 3 and drop_oldest behaviour set to true, 
 ```
-offlineQ = offlineQueue(queue_size=3, drop_oldest=True, draining_frequency=1)
+buffering = Buffering(queue_size=3, drop_oldest=True, draining_frequency=1)
 ```
 As the publish message arrives the queue will be like this after 3 publish message arrive:
 ```
