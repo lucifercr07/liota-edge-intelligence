@@ -31,7 +31,7 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-import sqlite3
+from collections import deque
 import threading
 import time
 from liota.dcc_comms.dcc_comms import DCCComms
@@ -39,114 +39,89 @@ from liota.dcc_comms.check_connection import checkConnection
 
 log = logging.getLogger(__name__)
 
-class offline_database:
-	def __init__(self, table_name, comms, conn=None, data_drain_size=1, draining_frequency=0):
+class offlineQueue:
+	def __init__(self, queue_size, comms, conn=None, data_drain_size=1, drop_oldest=True, draining_frequency=0):
 		"""
-			:param table_name: table_name in which message will be stored
+			:param size: size of the offline_queue, if negative implies infinite.
+			:param drop_oldest: if True oldest data will be dropped after size of queue is exceeded. 
 			:param comms: comms instance of DCCComms
 			:param draining_frequency: frequency with which data will be published after internet connectivity established.
 		"""
-		if not isinstance(table_name, basestring):
-			log.error("Table name should be a string.")
-			raise TypeError("Table name should be a string.")
+		if not isinstance(queue_size, int):
+			log.error("Size is expected of int type.")
+			raise TypeError("Size is expected of int type.")
 		if not isinstance(comms, DCCComms):
 			log.error("DCCComms object is expected.")
 			raise TypeError("DCCComms object is expected.")
+		if not isinstance(drop_oldest, bool):
+			log.error("drop_oldest/newest is expected of bool type.")
+			raise TypeError("drop_oldest is expected of bool type.")
 		if not isinstance(draining_frequency, float) and not isinstance(draining_frequency, int):
 			log.error("draining_frequency is expected of float or int type.")
 			raise TypeError("draining_frequency is expected of float or int type.")
 		try: 
-			assert draining_frequency>=0
+			assert queue_size!=0 and draining_frequency>=0
 		except AssertionError as e:
-			log.error("draining_frequency can't be negative.")
-			raise e("draining_frequency can't be negative.")
-		self.table_name = table_name
-		if conn is None:
-			self.internet_conn = checkConnection()
+			log.error("Size can't be zero, draining_frequency can't be negative.")
+			raise e("Size can't be zero, draining_frequency can't be negative.")
+		self.size = queue_size
+		self.drop_oldest = drop_oldest
+		if (self.size>0 and drop_oldest):
+			self.d = deque(maxlen=self.size)
 		else:
-			self.internet_conn = conn
-		self.draining_frequency = draining_frequency
-		self.data_drain_size = data_drain_size
+			self.d = deque()
 		self.comms = comms
-		self.flag_conn_open = False
+		self.data_drain_size = data_drain_size
+		if conn is None:
+			self.conn = checkConnection()
+		else:
+			self.conn = conn
+		self.draining_frequency = draining_frequency
 		self.draining_in_progress = False
-		self._offline_db_lock = threading.Lock()
-		self._create_table()
-
-	def _create_table(self):
-		if self.flag_conn_open is False:
-			self.conn = sqlite3.connect('storage.db')
-			try:
-				with self.conn:
-					if not self.conn.execute("SELECT name FROM sqlite_master WHERE TYPE='table' AND name= ? ", (self.table_name,)).fetchone():
-						self.conn.text_factory = str
-						self.flag_conn_open = True
-						self.cursor = self.conn.cursor()
-						self.cursor.execute("CREATE TABLE "+self.table_name+" (Message TEXT)")
-						self.cursor.close()
-						del self.cursor
-					else:
-						print "Table already there!!!"
-			except Exception as e:
-				raise e
-			finally:
-				self.flag_conn_open = False
-				self.conn.close()
-
-	def add(self, message):
-		try:
-			self.conn = sqlite3.connect('storage.db')
-			self.flag_conn_open = True
-			with self.conn:
-				self.cursor = self.conn.cursor()
-				print "Adding data to "+ self.table_name
-				self.cursor.execute("INSERT INTO "+self.table_name+"(Message) VALUES (?);", (message,))
-				self.cursor.close()
-				del self.cursor
-		except sqlite3.OperationalError as e:
-			raise e
-		finally:
-			self.conn.close()
-			self.flag_conn_open = False
+		self._offlineQLock = threading.Lock()
+		
+	def append(self, data):
+		if (self.size<0):	#for infinite length deque
+			self.d.append(data)
+		elif (self.size>0 and self.drop_oldest): #for deque with drop_oldest=True
+			if len(self.d) is self.size:
+				log.info("Message dropped: {}".format(self.d[0]))
+			self.d.append(data)
+		else:									#for deque with drop_oldest=False
+			if len(self.d) is self.size:
+				log.info("Message dropped: {}".format(data))
+			else:
+				self.d.append(data)
 
 	def _drain(self):
-		self._offline_db_lock.acquire()
-		self.conn = sqlite3.connect('storage.db')
-		self.flag_conn_open = True
-		self.draining_in_progress = True
-		self.cursor = self.conn.cursor()
-		self.del_cursor = self.conn.cursor()
+		self._offlineQLock.acquire()
 		data_drained = 0
+		self.draining_in_progress = True
 		try:
-			for row in self.cursor.execute("SELECT Message FROM "+self.table_name):
-				if self.comms is not None and self.internet_conn.check :
-					try:
-						self.comms.send(row[0])
-						log.info("Data Drain: {}".format(row[0]))
-						print "Data drained: ",row[0]
-						data_drained+=1
-						self.del_cursor.execute("Delete from "+self.table_name+" where rowid IN (Select rowid from "+self.table_name+" limit 1);")
-						self.conn.commit()
-					except Exception as e:
-						raise e
-				else:						#internet connectivity breaks while draining
-					log.warning("Internet broke while draining")
+			while self.d:
+				if self.conn.check:
+					data = self.d.popleft()
+					self.comms.send(data)
+					data_drained+=1
+					log.info("Data Drain: {}".format(data))
+				else:		#if internet conncetivity breaks while draining
+					log.warning("Internet broke while draining.")
 					break
 				if data_drained==self.data_drain_size:		#if some amt. of data drained thread sleeps for specified draining_freqn.
+					print "Length of queue: ", len(self.d)
 					data_drained=0
 					time.sleep(self.draining_frequency)
 		except Exception as e:
-			raise e
 			log.warning("Internet connectivity broke while draining.")
+			raise e
 		finally:
-			self.del_cursor.close()
-			del self.del_cursor
-			self.conn.close()
-			self.flag_conn_open = False	
-			self.draining_in_progress = False	
-		self._offline_db_lock.release()
+			self.draining_in_progress = False
+			self._offlineQLock.release()
 
 	def start_drain(self):
 		queueDrain = threading.Thread(target=self._drain)
 		queueDrain.daemon = True
 		queueDrain.start()
+
+	def show(self):
+		print self.d
