@@ -40,7 +40,7 @@ from liota.entities.metrics.registered_metric import RegisteredMetric
 from liota.dcc_comms.check_connection import checkConnection
 from liota.core.offlineQueue import offlineQueue
 from liota.core.offline_database import offline_database
-from liota.lib.utilities.offline_buffering import Buffering
+from liota.lib.utilities.offline_buffering import BufferingParams
 
 log = logging.getLogger(__name__)
 
@@ -51,19 +51,19 @@ class DataCenterComponent:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, comms, buffering):
+    def __init__(self, comms, buffering_params):
         if not isinstance(comms, DCCComms):
             log.error("DCCComms object is expected.")
             raise TypeError("DCCComms object is expected.")
-        if not isinstance(buffering, Buffering):
+        if not isinstance(buffering, BufferingParams):
             log.error("Buffering object is expected.")
             raise TypeError("Buffering object is expected.")
         self.comms = comms
-        self.persistent_storage = buffering.persistent_storage
-        self.data_drain_size = buffering.data_drain_size
-        self.draining_frequency = buffering.draining_frequency
-        self.drop_oldest = buffering.drop_oldest
-        self.queue_size = buffering.queue_size
+        self.persistent_storage = buffering_params.persistent_storage
+        self.data_drain_size = buffering_params.data_drain_size
+        self.draining_frequency = buffering_params.draining_frequency
+        self.drop_oldest = buffering_params.drop_oldest
+        self.queue_size = buffering_params.queue_size
         self.conn = checkConnection()
         self.offline_buffering_enabled = False         #False means offline buffering/storage is off else on
 

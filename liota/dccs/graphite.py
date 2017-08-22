@@ -41,9 +41,9 @@ from liota.lib.utilities.utility import getUTCmillis
 log = logging.getLogger(__name__)
 
 class Graphite(DataCenterComponent):
-    def __init__(self, comms, buffering, edge_component=None):
+    def __init__(self, comms, buffering_params, edge_component=None):
         super(Graphite, self).__init__(
-            comms=comms,buffering=buffering
+            comms=comms,buffering_params=buffering_params
         )
         self.edge_component = edge_component
 
