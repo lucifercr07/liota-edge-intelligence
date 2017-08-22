@@ -30,15 +30,41 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
+import unittest
+from liota.edge_component.pfa_component import PFAComponent
+from mock import patch
 
-log = logging.getLogger(__name__)
+def action_actuator():
+	pass
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
+ModelPath = "/home/prasha/git_repo/liota_edge_intelligence/edge_intelligence_models/windmill-model/finalized_model.pfa"
 
+class TestPFAComponent(unittest.TestCase):
+	
+	def test_PFAComponent_fails_without_valid_ModelPath(self):
+		with self.assertRaises(Exception):
+			edge_component = PFAComponent("/home/asd", "asd")
+			assertNotIsInstance(edge_component, PFAComponent)
+
+	def test_PFAComponent_fails_without_valid_ModelPath(self):
+		with self.assertRaises(Exception):
+			edge_component = PFAComponent(ModelPath, "asd")
+			assert isinstance(edge_component, PFAComponent)
+		
+	def test_PFAComponent_fails_without_valid_actionActuator(self):
+		#Fails if action_actuator not of function type
+		with self.assertRaises(Exception):
+			edge_component = PFAComponent(ModelPath, "asd")
+			assertNotIsInstance(edge_component, PFAComponent)
+
+	def test_PFAComponent_takes_valid_actionActuator(self):
+		edge_component = PFAComponent(ModelPath, action_actuator)
+		assert isinstance(edge_component, PFAComponent)
+'''
+	def test_PFAComponent_actionActuator_called(self, mock):
+		edge_component = RuleEdgeComponent(ModelPath, action_actuator)
+		edge_component.process(message)
+		self.assertTrue(mock.called)
+'''
+if __name__ == '__main__':
+	unittest.main()

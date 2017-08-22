@@ -30,15 +30,57 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
+import unittest
+from liota.edge_component.rule_edge_component import RuleEdgeComponent
 
-log = logging.getLogger(__name__)
+def action_actuator():
+	pass
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
+ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
+exceed_limit = 1
 
+class TestRuleEdgeComponent(unittest.TestCase):
+	
+	def test_RuleEdgeComponent_fail_without_valid_modelRule(self):
+		#Fails if no argument pass
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent()
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+		
+		#Fails if not valid Model rule passed
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent("asd", exceed_limit, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+
+		#Fails if lambda function not passed as ModelRule
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(action_actuator, exceed_limit, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+
+	def test_RuleEdgeComponent_takes_valid_modelRule(self):
+		
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
+
+	def test_RuleEdgeComponent_fail_with_invalidArg_exceedLimit(self):
+		#Fails if int not passed as exceed_limit
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(ModelRule, 2.0, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+
+	def test_RuleEdgeComponent_takes_validArg_exceedLimit(self):
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
+
+	def test_RuleEdgeComponent_fails_without_valid_actionActuator(self):
+		#Fails if action_actuator not of function type
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(ModelRule, exceed_limit, "asd")
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+
+	def test_RuleEdgeComponent_takes_valid_actionActuator(self):
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
+
+if __name__ == '__main__':
+	unittest.main()

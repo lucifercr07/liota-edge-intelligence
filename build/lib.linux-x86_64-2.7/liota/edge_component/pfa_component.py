@@ -32,13 +32,55 @@
 
 import logging
 
+from liota.edge_component.edge_component import EdgeComponent
+import csv
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
+import titus.prettypfa
+import json
+from titus.genpy import PFAEngine
+
 log = logging.getLogger(__name__)
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
 
+class PFAComponent(EdgeComponent):
+
+    def __init__(self, model_path, actuator_udm):
+        super(PFAComponent, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
+
+    def load_model(self):
+        log.info("Loading model..")
+        self.model, = PFAEngine.fromJson(json.load(open(self.model_path)))
+
+    def register(self, entity_obj):
+        if isinstance(entity_obj, Metric):
+            return RegisteredMetric(entity_obj, self, None)
+        else:
+            return RegisteredEntity(entity_obj, self, None)
+
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
+
+    def process(self,message):
+        self.actuator_udm(self.model.action(message))
+
+    def _format_data(self, reg_metric):
+        met_cnt = reg_metric.values.qsize()
+        if met_cnt == 0:
+            return
+        for _ in range(met_cnt):
+            m = reg_metric.values.get(block=True)
+            if m is not None:
+                return m[1]
+
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    def unregister(self, entity_obj):
+        pass
+
+    def build_model(self):
+        pass

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------#
-#  Copyright © 2015-2016 VMware, Inc. All Rights Reserved.                    #
+#  Copyright © 2015-2017 VMware, Inc. All Rights Reserved.                    #
 #                                                                             #
 #  Licensed under the BSD 2-Clause License (the “License”); you may not use   #
 #  this file except in compliance with the License.                           #
@@ -30,15 +30,30 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
+import unittest
 
-log = logging.getLogger(__name__)
+import mock
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
+from liota.dccs.graphite import Graphite
+from liota.dcc_comms.dcc_comms import DCCComms
 
+
+class TestDCCGraphite(unittest.TestCase):
+
+    def test_graphite_dcc_init_fail_without_DCCComms(self):
+        with self.assertRaises(Exception):
+            g = Graphite("asd")
+            assert not isinstance(g, Graphite)
+
+        with self.assertRaises(Exception):
+            # noinspection PyArgumentList
+            g = Graphite()
+            assert g is None
+
+    def test_graphite_dcc_init_takes_DCCComms(self):
+        mock_dccc = mock.create_autospec(DCCComms)
+        g = Graphite(mock_dccc)
+        assert isinstance(g, Graphite)
+
+if __name__ == '__main__':
+    unittest.main()

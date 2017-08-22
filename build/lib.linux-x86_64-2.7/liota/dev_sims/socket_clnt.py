@@ -29,16 +29,76 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-
+import json
 import logging
+import socket
+import time
+
+from liota.dev_sims.device_simulator import DeviceSimulator
 
 log = logging.getLogger(__name__)
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
+class SocketSimulator(DeviceSimulator):
+    """
+    SocketSimulator does inter-process communication (IPC), and
+    sends simulated device beacon message.
+    """
+    def __init__(self, ip_port, name, simulator):
+        super(SocketSimulator, self).__init__(name=name)
+        str_list = ip_port.split(':')
+        self.ip = str_list[0]
+        if str_list[1] == "" or str_list[1] == None:
+            log.error("No port is specified!")
+            return
+        self.port = int(str_list[1])
+        self.simulator = simulator # backpoint to simulator obj
+        self._connect()
 
+    def _connect(self):
+        self.sock = socket.socket()
+        log.info("Establishing Socket Connection")
+        try:
+            self.sock.connect((self.ip, self.port))
+            log.info("Socket Created")
+        except Exception as ex:
+            log.exception(
+                "Unable to establish socket connection. Please check the firewall rules and try again.")
+            self.sock.close()
+            self.sock = None
+            raise ex
+        log.debug("SocketSimulator is initialized")
+        print "SocketSimulator is initialized"
+        self.cnt = 0
+        self.flag_alive = True
+        self.start()
+
+    def clean_up(self):
+        self.flag_alive = False
+        self.sock.close()
+
+    def send(self, message):
+        self.sock.send(message)
+
+    def run(self):
+        log.info('SocketSimulator is running...')
+        print 'SocketSimulator is running...'
+        while self.flag_alive:
+            msg = {
+                "LM35": {
+                    "k1": "v1",
+                    "SN": "0",
+                    "kn": "vn"
+                }
+            }
+            if self.cnt >= 5:
+                time.sleep(1000);
+            else:
+                msg["LM35"]["SN"] = str(self.cnt)
+                log.debug("send msg:{0}".format(msg))
+                self.sock.sendall(json.dumps(msg))
+                time.sleep(5)
+            self.cnt += 1
+            if self.cnt > 20:
+                self.flag = False
+        log.info('closing %s connection socket %s'.format(self.ip, self.sock))
+        self.sock.close()

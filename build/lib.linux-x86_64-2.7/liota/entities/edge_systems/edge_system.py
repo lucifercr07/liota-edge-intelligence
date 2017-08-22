@@ -30,15 +30,22 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
+from abc import ABCMeta, abstractmethod
 
-log = logging.getLogger(__name__)
+from liota.entities.entity import Entity
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
 
+class EdgeSystem(Entity):
+
+    """
+    Abstract base class for all edge systems (gateways).
+    """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self, name, entity_id, entity_type="EdgeSystem"):
+        super(EdgeSystem, self).__init__(
+            name=name,
+            entity_id=entity_id,
+            entity_type=entity_type
+        )

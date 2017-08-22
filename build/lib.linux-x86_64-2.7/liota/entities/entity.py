@@ -30,15 +30,21 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
+from abc import ABCMeta, abstractmethod
+from liota.entities.registered_entity import RegisteredEntity
 
-log = logging.getLogger(__name__)
+class Entity:
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
+    """
+    Abstract base class for all entities.
+    """
+    __metaclass__ = ABCMeta
 
+    @abstractmethod
+    def __init__(self, name, entity_id, entity_type):
+        if not isinstance(name, basestring) \
+                or not isinstance(entity_type, basestring):
+            raise TypeError()
+        self.name = name
+        self.entity_id = entity_id
+        self.entity_type = entity_type

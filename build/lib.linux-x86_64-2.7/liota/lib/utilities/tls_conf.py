@@ -34,11 +34,20 @@ import logging
 
 log = logging.getLogger(__name__)
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
 
+class TLSConf:
+    """
+    This class encapsulates TLS config related parameters.
+    """
+
+    def __init__(self, cert_required, tls_version, cipher):
+        """
+        :param cert_required: Defines the certificate requirements
+        :param tls_version: Version of SSL/TLS protocol to be used
+        :param cipher: Ciphers is a string specifying which encryption ciphers are allowable
+                        for a connection, or None to use the defaults.
+        """
+        self.cert_required = cert_required
+        self.tls_version = tls_version
+        self.cipher = cipher
+        log.debug("Created TLSConf.")

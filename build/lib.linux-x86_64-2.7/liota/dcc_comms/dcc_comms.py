@@ -30,15 +30,37 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
+from abc import ABCMeta, abstractmethod
 
-log = logging.getLogger(__name__)
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
+class DCCComms:
 
+    """
+    Abstract base class for all DCC communications.
+    """
+    __metaclass__ = ABCMeta
+
+    #-----------------------------------------------------------------------
+    # If a specific DCCComms has parameters to establish connection, pass
+    # them to its constructor, not self._connect. Keep self._connect free of
+    # external arguments.
+    #
+    @abstractmethod
+    def __init__(self):
+        self._connect()
+
+    @abstractmethod
+    def _connect(self):
+        pass
+
+    @abstractmethod
+    def _disconnect(self):
+        pass
+
+    @abstractmethod
+    def send(self, message, msg_attr):
+        pass
+
+    @abstractmethod
+    def receive(self, msg_attr):
+        pass

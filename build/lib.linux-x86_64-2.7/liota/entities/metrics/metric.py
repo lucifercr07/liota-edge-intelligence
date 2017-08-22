@@ -30,15 +30,35 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
+import pint
+from liota.entities.entity import Entity
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.lib.utilities.utility import systemUUID
 
-log = logging.getLogger(__name__)
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
+class Metric(Entity):
 
+    def __init__(self, name, entity_type="Metric",
+                 unit=None,
+                 interval=60,
+                 aggregation_size=1,
+                 sampling_function=None
+                 ):
+        if not (unit is None or isinstance(unit, pint.unit._Unit)) \
+                or not (
+            isinstance(interval, int) or isinstance(interval, float)
+        ) \
+                or not isinstance(aggregation_size, int):
+            raise TypeError()
+        super(Metric, self).__init__(
+            name=name,
+            entity_id=systemUUID().get_uuid(name),
+            entity_type=entity_type
+        )
+        self.unit = unit
+        self.interval = interval
+        self.aggregation_size = aggregation_size
+        self.sampling_function = sampling_function
+
+    def register(self, dcc_obj, reg_entity_id):
+        return RegisteredMetric(self, dcc_obj, reg_entity_id)

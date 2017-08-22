@@ -31,14 +31,73 @@
 # ----------------------------------------------------------------------------#
 
 import logging
+from abc import ABCMeta, abstractmethod
+
+from liota.entities.entity import Entity
+from liota.entities.metrics.registered_metric import RegisteredMetric
 
 log = logging.getLogger(__name__)
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
 
+class EdgeComponent:
+
+    """
+    Abstract base class for all EdgeComponents.
+    """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self, model_path, actuator_udm):
+        self.model_path = model_path
+        self.actuator_udm = actuator_udm
+
+    # -----------------------------------------------------------------------
+    # Implement this method in subclasses and do actual registration.
+    #
+    # This method should return a RegisteredEntity if successful, or raise
+    # an exception if failed. Call this method from subclasses for a type
+    # check.
+    #
+
+    @abstractmethod
+    def register(self, entity_obj):
+        if not isinstance(entity_obj, Entity):
+            log.error("Entity object is expected.")
+            raise TypeError("Entity object is expected.")
+
+    @abstractmethod
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
+
+    @abstractmethod
+    def _format_data(self, reg_metric):
+        pass
+
+    @abstractmethod
+    def process(self, message):
+        pass
+
+    def publish(self, reg_metric):
+        if not isinstance(reg_metric, RegisteredMetric):
+            log.error("RegisteredMetric object is expected.")
+            raise TypeError("RegisteredMetric object is expected.")
+        self.process(self._format_data(reg_metric))
+
+    @abstractmethod
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    @abstractmethod
+    def unregister(self, entity_obj):
+        if not isinstance(entity_obj, Entity):
+            raise TypeError
+
+    @abstractmethod
+    def build_model(self):
+        pass
+
+    @abstractmethod
+    def load_model(self):
+        pass
+
+class RegistrationFailure(Exception): pass

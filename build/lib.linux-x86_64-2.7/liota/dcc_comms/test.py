@@ -29,16 +29,13 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
+from liota.dcc_comms.check_connection import CheckConnection
+from liota.dcc_comms.timeout_exceptions import timeoutException
 
-import logging
-
-log = logging.getLogger(__name__)
-
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
-
+def check():
+    try:
+        conn=CheckConnection()
+        conn.checkConn()
+    except timeoutException as t:
+        print t
+check()

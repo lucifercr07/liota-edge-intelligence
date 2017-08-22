@@ -29,16 +29,45 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-
 import logging
+import socket
+from liota.dcc_comms.dcc_comms import DCCComms
+from liota.dcc_comms.timeout_exceptions import timeoutException
 
 log = logging.getLogger(__name__)
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
+class SocketDccComms(DCCComms):
 
+    def __init__(self, ip, port):
+        self.ip = ip
+        self.port = port
+        self._connect()
+
+    def _connect(self):
+        self.client = socket.socket()
+        log.info("Establishing Socket Connection")
+        try:
+            self.client.connect((self.ip, self.port))
+            log.info("Socket Created")
+        except Exception as ex: 
+            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
+            self.client.close()
+            self.client = None
+            raise ex
+
+    def _disconnect(self):
+        raise NotImplementedError
+
+    def send(self, message, msg_attr=None):
+        log.debug("Publishing message:" + str(message))
+        if self.client is not None:
+            try:
+                self.client.sendall(message) #None is returned if successful data sent, else exception is raised
+            except Exception as ex:
+                log.exception("Data not sent")
+                self.client.close()
+                self.client = None
+                return timeoutException
+
+    def receive(self):
+        raise NotImplementedError

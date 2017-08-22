@@ -32,13 +32,49 @@
 
 import logging
 
+from liota.edge_component.edge_component import EdgeComponent
+import csv
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
+
 log = logging.getLogger(__name__)
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
 
+class FileReader(EdgeComponent):
+
+    def __init__(self, model_path, actuator_udm):
+        super(FileReader, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
+
+    def load_model(self):
+        log.info("Loading model..")
+
+    def register(self, entity_obj):
+        if isinstance(entity_obj, Metric):
+            return RegisteredMetric(entity_obj, self, None)
+        else:
+            return RegisteredEntity(entity_obj, self, None)
+
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
+
+    def process(self,message):
+        with open(self.model_path) as csvfile:
+            self.readCSV = csv.reader(csvfile, delimiter=',')
+            for row in self.readCSV:
+                self.actuator_udm(row)
+
+    def _format_data(self, reg_metric):
+        # TODO: get values out of reg_metric and return values
+        pass
+
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    def unregister(self, entity_obj):
+        pass
+
+    def build_model(self):
+        pass

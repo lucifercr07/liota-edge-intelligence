@@ -30,15 +30,25 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
+from abc import ABCMeta, abstractmethod
+from threading import Thread
 
-log = logging.getLogger(__name__)
+class DiscoveryListener(Thread):
+    """
+    DiscoveryListener is ABC (abstract base class) of all listening classes.
+    Developers should extend DiscoveryListener class and implement the abstract methods.
+    """
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
+    __metaclass__ = ABCMeta
 
+    @abstractmethod
+    def __init__(self, name):
+        Thread.__init__(self, name=name)
+
+    @abstractmethod
+    def run(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def clean_up(self):
+        raise NotImplementedError

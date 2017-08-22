@@ -30,15 +30,32 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
+from abc import ABCMeta, abstractmethod
 import logging
 
 log = logging.getLogger(__name__)
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
 
+class Filter:
+    """
+    Abstract base class for all Filters.
+
+    Filtering can reduce network bandwidth by trimming off data that we are not interested in.  Also, most of the
+    time systems will be working normally.  Sending all those normal data to DCC is not desired most of the time,
+    as there is always storage and processing overhead involved.
+    """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def filter(self, v):
+        """
+        Child classes must implement appropriate filtering logic.
+
+        :param v: Collected value by sampling function.
+        :return: Filtered value or None
+        """
+        pass

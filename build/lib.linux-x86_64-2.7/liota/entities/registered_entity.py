@@ -30,15 +30,13 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
+class RegisteredEntity(object):
 
-log = logging.getLogger(__name__)
+    def __init__(self, ref_entity, ref_dcc, reg_entity_id):
+        self.ref_entity = ref_entity
+        self.ref_dcc = ref_dcc
+        self.reg_entity_id = reg_entity_id
+        self.parent = None
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
-
+    def set_properties(self, properties):
+        self.ref_dcc.set_properties(self, properties)

@@ -30,15 +30,58 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
+import json
 import logging
+
+import numpy as np
+from sklearn.externals import joblib
+
+from liota.edge_component.edge_component import EdgeComponent
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
+
 
 log = logging.getLogger(__name__)
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
 
+class SKLearnEdgeComponent(EdgeComponent):
+
+    def __init__(self, model_path, actuator_udm):
+        super(SKLearnEdgeComponent, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
+
+    def load_model(self):
+        log.info("Loading model..")
+        self.model = joblib.load(self.model_path)
+
+    def register(self, entity_obj):
+        if isinstance(entity_obj, Metric):
+            return RegisteredMetric(entity_obj, self, None)
+        else:
+            return RegisteredEntity(entity_obj, self, None)
+
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
+
+    def process(self, message):
+        self.actuator_udm(self.model.predict(message)[0])
+
+    def _format_data(self, reg_metric):
+        met_cnt = reg_metric.values.qsize()
+        if met_cnt == 0:
+            return
+        for _ in range(met_cnt):
+            m = reg_metric.values.get(block=True)
+            if m is not None:
+                return np.array([m[1]]).reshape(-1, 1)
+
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    def unregister(self, entity_obj):
+        pass
+
+    def build_model(self):
+        pass

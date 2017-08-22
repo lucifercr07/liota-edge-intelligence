@@ -34,11 +34,25 @@ import logging
 
 log = logging.getLogger(__name__)
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
 
+class Identity:
+    """
+    This class encapsulates certificates and credentials related to a connection both at Dcc and Device side.
+    """
+
+    def __init__(self, root_ca_cert, username, password, cert_file, key_file):
+        """
+        :param root_ca_cert: Root CA certificate path or Self-signed server certificate path
+        :param username: Username
+        :param password: Corresponding password
+        :param cert_file: Device certificate file path
+        :param key_file: Device certificate key-file path
+        """
+        self.root_ca_cert = root_ca_cert
+        self.username = username
+        self.password = password
+        self.cert_file = cert_file
+        self.key_file = key_file
+        log.debug("Created Identity with rootCA path: {0}, username: {1}, device_cert_path: {2}"
+                  "device_key_file_path: {3}".format(self.root_ca_cert, self.username, self.cert_file,
+                                                     self.key_file))

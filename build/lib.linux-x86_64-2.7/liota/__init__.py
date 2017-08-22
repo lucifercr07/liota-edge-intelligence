@@ -30,15 +30,14 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
+import ConfigParser
+import errno
+import json
 import logging
+import logging.config
+import os
 
-log = logging.getLogger(__name__)
+from lib.utilities.utility import systemUUID, LiotaConfigPath
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
-
+LiotaConfigPath().setup_logging()
+systemUUID()

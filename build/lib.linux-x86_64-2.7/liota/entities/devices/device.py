@@ -30,15 +30,28 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
+from abc import ABCMeta, abstractmethod
+from liota.entities.entity import Entity
 
-log = logging.getLogger(__name__)
+class Device(Entity):
 
-class Buffering:
-	def __init__(self, queue_size=-1, persistent_storage=False, data_drain_size=10, drop_oldest=True, draining_frequency=1):
-		self.persistent_storage = persistent_storage
-		self.queue_size = queue_size
-		self.data_drain_size = data_drain_size
-		self.drop_oldest = drop_oldest
-		self.draining_frequency = draining_frequency
+    """
+    Abstract base class for all devices (things).
+    """
+    __metaclass__ = ABCMeta
 
+    #-----------------------------------------------------------------------
+    # Constructor of Device is not made abstract, so developer can create a
+    # plain device if that device does not have any specific method/data.
+    #
+    # It is possible to instantiate this class if no abstract method exists,
+    # even if it has ABCMeta as its meta-class.
+    #
+    # Add @abstractmethod if this is not what we want.
+    #
+    def __init__(self, name, entity_id, entity_type="Device"):
+        super(Device, self).__init__(
+            name=name,
+            entity_id=entity_id,
+            entity_type=entity_type
+        )
