@@ -1,2 +1,0 @@
-class timeoutException(Exception):
-	pass
