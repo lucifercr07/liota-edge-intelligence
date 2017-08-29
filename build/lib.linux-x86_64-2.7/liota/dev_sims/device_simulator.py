@@ -30,44 +30,25 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+from abc import ABCMeta, abstractmethod
+from threading import Thread
 
-dependencies = ["edge_systems/dell5k/edge_system"]
-
-
-class PackageClass(LiotaPackage):
+class DeviceSimulator(Thread):
     """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
+    DeviceSimulator is ABC (abstract base class) of all device beaconing classes.
+    Developers should extend DeviceSimulator class and implement the abstract methods.
     """
 
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
+    __metaclass__ = ABCMeta
 
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
+    @abstractmethod
+    def __init__(self, name):
+        Thread.__init__(self, name=name)
 
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
+    @abstractmethod
+    def run(self):
+        raise NotImplementedError
 
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
-
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
-
+    @abstractmethod
     def clean_up(self):
-        self.graphite.comms.client.close()
+        raise NotImplementedError

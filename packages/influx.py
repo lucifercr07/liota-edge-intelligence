@@ -38,14 +38,14 @@ dependencies = ["edge_systems/dell5k/edge_system"]
 
 class PackageClass(LiotaPackage):
     """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
+    This package creates a Influx DCC object and registers system on
+    Influx to acquire "registered edge system", i.e. influx_edge_system.
     """
 
     def run(self, registry):
         import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
+        from liota.dccs.influx import Influx
+        from liota.dcc_comms.telegraf_comms import TelegrafComms
         from liota.lib.utilities.offline_buffering import BufferingParams
             
         # Acquire resources from registry
@@ -58,16 +58,15 @@ class PackageClass(LiotaPackage):
 
         # Initialize DCC object with transport
         offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
+        self.influx = Influx(
+            TelegrafComms(ip='localhost',port=8092), buffering_params=offline_buffering
         )
 
         # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
+        influx_edge_system = self.influx.register(edge_system)
 
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
+        registry.register("influx", self.influx)
+        registry.register("influx_edge_system", influx_edge_system)
 
     def clean_up(self):
-        self.graphite.comms.client.close()
+        self.influx.comms.client = None

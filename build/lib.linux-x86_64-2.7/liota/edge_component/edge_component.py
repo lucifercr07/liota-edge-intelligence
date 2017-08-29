@@ -30,44 +30,74 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+import logging
+from abc import ABCMeta, abstractmethod
 
-dependencies = ["edge_systems/dell5k/edge_system"]
+from liota.entities.entity import Entity
+from liota.entities.metrics.registered_metric import RegisteredMetric
+
+log = logging.getLogger(__name__)
 
 
-class PackageClass(LiotaPackage):
+class EdgeComponent:
+
     """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
+    Abstract base class for all EdgeComponents.
     """
+    __metaclass__ = ABCMeta
 
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
+    @abstractmethod
+    def __init__(self, model_path, actuator_udm):
+        self.model_path = model_path
+        self.actuator_udm = actuator_udm
 
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
+    # -----------------------------------------------------------------------
+    # Implement this method in subclasses and do actual registration.
+    #
+    # This method should return a RegisteredEntity if successful, or raise
+    # an exception if failed. Call this method from subclasses for a type
+    # check.
+    #
 
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
+    @abstractmethod
+    def register(self, entity_obj):
+        if not isinstance(entity_obj, Entity):
+            log.error("Entity object is expected.")
+            raise TypeError("Entity object is expected.")
 
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
+    @abstractmethod
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
 
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
+    @abstractmethod
+    def _format_data(self, reg_metric):
+        pass
 
-    def clean_up(self):
-        self.graphite.comms.client.close()
+    @abstractmethod
+    def process(self, message):
+        pass
+
+    def publish(self, reg_metric):
+        if not isinstance(reg_metric, RegisteredMetric):
+            log.error("RegisteredMetric object is expected.")
+            raise TypeError("RegisteredMetric object is expected.")
+        self.process(self._format_data(reg_metric))
+
+    @abstractmethod
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    @abstractmethod
+    def unregister(self, entity_obj):
+        if not isinstance(entity_obj, Entity):
+            raise TypeError
+
+    @abstractmethod
+    def build_model(self):
+        pass
+
+    @abstractmethod
+    def load_model(self):
+        pass
+
+class RegistrationFailure(Exception): pass

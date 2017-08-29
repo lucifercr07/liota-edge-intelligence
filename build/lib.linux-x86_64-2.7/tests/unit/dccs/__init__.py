@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------#
-#  Copyright © 2015-2016 VMware, Inc. All Rights Reserved.                    #
+#  Copyright © 2015-2017 VMware, Inc. All Rights Reserved.                    #
 #                                                                             #
 #  Licensed under the BSD 2-Clause License (the “License”); you may not use   #
 #  this file except in compliance with the License.                           #
@@ -29,45 +29,3 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
-
-dependencies = ["edge_systems/dell5k/edge_system"]
-
-
-class PackageClass(LiotaPackage):
-    """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
-    """
-
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
-
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
-
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
-
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
-
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
-
-    def clean_up(self):
-        self.graphite.comms.client.close()

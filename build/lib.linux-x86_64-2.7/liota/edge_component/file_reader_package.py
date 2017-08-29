@@ -30,44 +30,51 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+import logging
 
-dependencies = ["edge_systems/dell5k/edge_system"]
+from liota.edge_component.edge_component import EdgeComponent
+import csv
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
+
+log = logging.getLogger(__name__)
 
 
-class PackageClass(LiotaPackage):
-    """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
-    """
+class FileReader(EdgeComponent):
 
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
+    def __init__(self, model_path, actuator_udm):
+        super(FileReader, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
 
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
+    def load_model(self):
+        log.info("Loading model..")
 
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
+    def register(self, entity_obj):
+        if isinstance(entity_obj, Metric):
+            return RegisteredMetric(entity_obj, self, None)
+        else:
+            return RegisteredEntity(entity_obj, self, None)
 
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
 
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
+    def process(self,message):
+        with open(self.model_path) as csvfile:
+            self.readCSV = csv.reader(csvfile, delimiter=',')
+            for row in self.readCSV:
+                self.actuator_udm(row)
 
-    def clean_up(self):
-        self.graphite.comms.client.close()
+    def _format_data(self, reg_metric):
+        # TODO: get values out of reg_metric and return values
+        pass
+
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    def unregister(self, entity_obj):
+        pass
+
+    def build_model(self):
+        pass

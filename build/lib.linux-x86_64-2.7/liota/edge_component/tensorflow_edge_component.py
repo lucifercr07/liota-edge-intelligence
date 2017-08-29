@@ -30,44 +30,63 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+import tensorflow as tf
+import logging
+import numpy as np
+from liota.edge_component.edge_component import EdgeComponent
+from liota.entities.registered_entity import RegisteredEntity
+from liota.entities.edge_systems.edge_system import EdgeSystem
+from liota.entities.devices.device import Device
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
 
-dependencies = ["edge_systems/dell5k/edge_system"]
+log = logging.getLogger(__name__)
+
+class TensorFlowEdgeComponent(EdgeComponent):
+
+	def __init__(self, model_path, features=[""], actuator_udm=None):
+		self.model = None
+		self.features = features
+		self.model_path = model_path
+		self.actuator_udm = actuator_udm
+		self.load_model(self.model_path)
+
+	def load_model(self,model_path):
+		with tf.Session() as sess:
+			feature_cols = [tf.contrib.layers.real_valued_column(k, dimension=1) for k in self.features]
+			self.model = tf.contrib.learn.LinearClassifier(feature_columns=feature_cols, model_dir=self.model_path)
+			
+	def register(self, entity_obj):
+		if isinstance(entity_obj, Metric):
+			return RegisteredMetric(entity_obj, self, None)
+		else:
+			return RegisteredEntity(entity_obj, self, None)
+
+	def create_relationship(self, reg_entity_parent, reg_entity_child):
+		reg_entity_child.parent = reg_entity_parent
+
+	def input_fn(self, message):
+		return np.array([message], dtype=np.float32)
+
+	def process(self, message):
+		self.actuator_udm(list(self.model.predict_classes(input_fn=lambda:self.input_fn(message))))
+
+	def _format_data(self, reg_metric):
+		met_cnt = reg_metric.values.qsize()
+		if met_cnt == 0:
+			return
+		for _ in range(met_cnt):
+			m = reg_metric.values.get(block=True)
+			if m is not None:
+				return m[1]
+
+	def set_properties(self, reg_entity, properties):
+		super(TensorFlowEdgeComponent, self).set_properties(reg_entity, properties)
+
+	def unregister(self, entity_obj):
+		pass
+
+	def build_model(self):
+		pass
 
 
-class PackageClass(LiotaPackage):
-    """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
-    """
-
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
-
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
-
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
-
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
-
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
-
-    def clean_up(self):
-        self.graphite.comms.client.close()

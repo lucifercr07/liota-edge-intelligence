@@ -30,44 +30,85 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+import logging
+import numpy as np
+from liota.edge_component.edge_component import EdgeComponent
+from liota.entities.registered_entity import RegisteredEntity
+from liota.entities.edge_systems.edge_system import EdgeSystem
+from liota.entities.devices.device import Device
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+import types
 
-dependencies = ["edge_systems/dell5k/edge_system"]
+log = logging.getLogger(__name__)
+
+class RuleEdgeComponent(EdgeComponent):
+	def __init__(self, model_rule, exceed_limit_consecutive, actuator_udm):
+		if model_rule is None:
+			raise TypeError("Model rule must be specified.")
+
+		if not isinstance(model_rule, types.LambdaType):
+			raise TypeError("Model rule must be a lambda function.")
+
+		if model_rule.__name__ != "<lambda>":
+			raise TypeError("Model rule must be a lambda function.")			
+
+		if type(exceed_limit_consecutive) is not int:
+			raise ValueError("exceed_limit should be a integer value.")
+
+		if not isinstance(actuator_udm, types.FunctionType):
+			raise TypeError("Model rule must be a function.")
+
+		self.model_rule = model_rule
+		self.actuator_udm = actuator_udm
+		self.exceed_limit = exceed_limit_consecutive
+		self.counter = 0
+
+	def register(self, entity_obj):
+		if isinstance(entity_obj, Metric):
+			return RegisteredMetric(entity_obj, self, None)
+		else:
+			return RegisteredEntity(entity_obj, self, None)
+
+	def create_relationship(self, reg_entity_parent, reg_entity_child):
+		pass 	
+
+	def process(self, message):
+		result = self.model_rule(*message)
+		self.counter = 0 if(result==0) else self.counter+1
+		if(self.counter>=self.exceed_limit):
+			self.actuator_udm(1)
+			self.counter=0
+		else:
+			self.actuator_udm(0)
 
 
-class PackageClass(LiotaPackage):
-    """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
-    """
+	def _format_data(self, reg_metric):
+		met_cnt = reg_metric.values.qsize()
+		metric = []
+		if met_cnt == 0:
+			return
+		if met_cnt == 1:
+			m = reg_metric.values.get(block=True)
+			metric.append(m[1])
+		else:
+			while met_cnt !=0:
+				m = reg_metric.values.get(block=True)
+				if m is not None:
+					metric.append(m)
+				met_cnt-=1
+		return metric	
 
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
+	def build_model(self):
+		pass	
 
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
+	def load_model(self):
+		pass
 
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
+	def set_properties(self, reg_entity, properties):
+		pass
 
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
+	def unregister(self):
+		pass
 
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
 
-    def clean_up(self):
-        self.graphite.comms.client.close()

@@ -30,44 +30,32 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+from abc import ABCMeta, abstractmethod
+import logging
 
-dependencies = ["edge_systems/dell5k/edge_system"]
+log = logging.getLogger(__name__)
 
 
-class PackageClass(LiotaPackage):
+class Filter:
     """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
+    Abstract base class for all Filters.
+
+    Filtering can reduce network bandwidth by trimming off data that we are not interested in.  Also, most of the
+    time systems will be working normally.  Sending all those normal data to DCC is not desired most of the time,
+    as there is always storage and processing overhead involved.
     """
+    __metaclass__ = ABCMeta
 
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
+    @abstractmethod
+    def __init__(self):
+        pass
 
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
+    @abstractmethod
+    def filter(self, v):
+        """
+        Child classes must implement appropriate filtering logic.
 
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
-
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
-
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
-
-    def clean_up(self):
-        self.graphite.comms.client.close()
+        :param v: Collected value by sampling function.
+        :return: Filtered value or None
+        """
+        pass

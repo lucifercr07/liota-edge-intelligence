@@ -30,44 +30,57 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+import unittest
+from liota.edge_component.rule_edge_component import RuleEdgeComponent
 
-dependencies = ["edge_systems/dell5k/edge_system"]
+def action_actuator():
+	pass
 
+ModelRule = lambda x : 1 if (x>=rpm_limit) else 0
+exceed_limit = 1
 
-class PackageClass(LiotaPackage):
-    """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
-    """
+class TestRuleEdgeComponent(unittest.TestCase):
+	
+	def test_RuleEdgeComponent_fail_without_valid_modelRule(self):
+		#Fails if no argument pass
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent()
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
+		
+		#Fails if not valid Model rule passed
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent("asd", exceed_limit, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
+		#Fails if lambda function not passed as ModelRule
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(action_actuator, exceed_limit, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
+	def test_RuleEdgeComponent_takes_valid_modelRule(self):
+		
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
 
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
+	def test_RuleEdgeComponent_fail_with_invalidArg_exceedLimit(self):
+		#Fails if int not passed as exceed_limit
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(ModelRule, 2.0, action_actuator)
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
+	def test_RuleEdgeComponent_takes_validArg_exceedLimit(self):
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
 
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
+	def test_RuleEdgeComponent_fails_without_valid_actionActuator(self):
+		#Fails if action_actuator not of function type
+		with self.assertRaises(Exception):
+			edge_component = RuleEdgeComponent(ModelRule, exceed_limit, "asd")
+			assertNotIsInstance(edge_component, RuleEdgeComponent)
 
-    def clean_up(self):
-        self.graphite.comms.client.close()
+	def test_RuleEdgeComponent_takes_valid_actionActuator(self):
+		edge_component = RuleEdgeComponent(ModelRule, exceed_limit, action_actuator)
+		assert isinstance(edge_component, RuleEdgeComponent)
+
+if __name__ == '__main__':
+	unittest.main()

@@ -30,44 +30,35 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+import pint
+from liota.entities.entity import Entity
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.lib.utilities.utility import systemUUID
 
-dependencies = ["edge_systems/dell5k/edge_system"]
 
+class Metric(Entity):
 
-class PackageClass(LiotaPackage):
-    """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
-    """
-
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
-
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
-
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
+    def __init__(self, name, entity_type="Metric",
+                 unit=None,
+                 interval=60,
+                 aggregation_size=1,
+                 sampling_function=None
+                 ):
+        if not (unit is None or isinstance(unit, pint.unit._Unit)) \
+                or not (
+            isinstance(interval, int) or isinstance(interval, float)
+        ) \
+                or not isinstance(aggregation_size, int):
+            raise TypeError()
+        super(Metric, self).__init__(
+            name=name,
+            entity_id=systemUUID().get_uuid(name),
+            entity_type=entity_type
         )
+        self.unit = unit
+        self.interval = interval
+        self.aggregation_size = aggregation_size
+        self.sampling_function = sampling_function
 
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
-
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
-
-    def clean_up(self):
-        self.graphite.comms.client.close()
+    def register(self, dcc_obj, reg_entity_id):
+        return RegisteredMetric(self, dcc_obj, reg_entity_id)

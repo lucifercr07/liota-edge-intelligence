@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------#
-#  Copyright © 2015-2016 VMware, Inc. All Rights Reserved.                    #
+#  Copyright © 2015-2017 VMware, Inc. All Rights Reserved.                    #
 #                                                                             #
 #  Licensed under the BSD 2-Clause License (the “License”); you may not use   #
 #  this file except in compliance with the License.                           #
@@ -30,44 +30,30 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+import unittest
 
-dependencies = ["edge_systems/dell5k/edge_system"]
+import mock
+
+from liota.dccs.graphite import Graphite
+from liota.dcc_comms.dcc_comms import DCCComms
 
 
-class PackageClass(LiotaPackage):
-    """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
-    """
+class TestDCCGraphite(unittest.TestCase):
 
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
+    def test_graphite_dcc_init_fail_without_DCCComms(self):
+        with self.assertRaises(Exception):
+            g = Graphite("asd")
+            assert not isinstance(g, Graphite)
 
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
+        with self.assertRaises(Exception):
+            # noinspection PyArgumentList
+            g = Graphite()
+            assert g is None
 
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
+    def test_graphite_dcc_init_takes_DCCComms(self):
+        mock_dccc = mock.create_autospec(DCCComms)
+        g = Graphite(mock_dccc)
+        assert isinstance(g, Graphite)
 
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
-
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
-
-    def clean_up(self):
-        self.graphite.comms.client.close()
+if __name__ == '__main__':
+    unittest.main()

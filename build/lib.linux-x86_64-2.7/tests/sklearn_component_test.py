@@ -30,44 +30,41 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+import unittest
+from liota.edge_component.sklearn_edge_component import SKLearnEdgeComponent
+from mock import patch
 
-dependencies = ["edge_systems/dell5k/edge_system"]
+def action_actuator():
+	pass
 
+ModelPath = "/home/prasha/git_repo/liota_edge_intelligence/edge_intelligence_models/windmill-model/finalized_model.sav"
 
-class PackageClass(LiotaPackage):
-    """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
-    """
+class TestSKLearnEdgeComponent(unittest.TestCase):
+	
+	def test_Component_fails_without_valid_ModelPath(self):
+		with self.assertRaises(Exception):
+			edge_component = SKLearnEdgeComponent("/home/asd", "asd")
+			assertNotIsInstance(edge_component, SKLearnEdgeComponent)
 
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
+	def test_SKLearnEdgeComponent_fails_without_valid_ModelPath(self):
+		with self.assertRaises(Exception):
+			edge_component = SKLearnEdgeComponent(ModelPath, "asd")
+			assert isinstance(edge_component, SKLearnEdgeComponent)
+		
+	def test_SKLearnEdgeComponent_fails_without_valid_actionActuator(self):
+		#Fails if action_actuator not of function type
+		with self.assertRaises(Exception):
+			edge_component = SKLearnEdgeComponent(ModelPath, "asd")
+			assertNotIsInstance(edge_component, SKLearnEdgeComponent)
 
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
-
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
-
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
-
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
-
-    def clean_up(self):
-        self.graphite.comms.client.close()
+	def test_SKLearnEdgeComponent_takes_valid_actionActuator(self):
+		edge_component = SKLearnEdgeComponent(ModelPath, action_actuator)
+		assert isinstance(edge_component, SKLearnEdgeComponent)
+'''
+	def test_SKLearnEdgeComponent_actionActuator_called(self, mock):
+		edge_component = RuleEdgeComponent(ModelPath, action_actuator)
+		edge_component.process(message)
+		self.assertTrue(mock.called)
+'''
+if __name__ == '__main__':
+	unittest.main()

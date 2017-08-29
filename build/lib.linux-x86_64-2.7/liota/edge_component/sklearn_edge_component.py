@@ -30,44 +30,58 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+import json
+import logging
 
-dependencies = ["edge_systems/dell5k/edge_system"]
+import numpy as np
+from sklearn.externals import joblib
+
+from liota.edge_component.edge_component import EdgeComponent
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
 
 
-class PackageClass(LiotaPackage):
-    """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
-    """
+log = logging.getLogger(__name__)
 
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
 
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
+class SKLearnEdgeComponent(EdgeComponent):
 
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
+    def __init__(self, model_path, actuator_udm):
+        super(SKLearnEdgeComponent, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
 
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
+    def load_model(self):
+        log.info("Loading model..")
+        self.model = joblib.load(self.model_path)
 
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
+    def register(self, entity_obj):
+        if isinstance(entity_obj, Metric):
+            return RegisteredMetric(entity_obj, self, None)
+        else:
+            return RegisteredEntity(entity_obj, self, None)
 
-    def clean_up(self):
-        self.graphite.comms.client.close()
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
+
+    def process(self, message):
+        self.actuator_udm(self.model.predict(message)[0])
+
+    def _format_data(self, reg_metric):
+        met_cnt = reg_metric.values.qsize()
+        if met_cnt == 0:
+            return
+        for _ in range(met_cnt):
+            m = reg_metric.values.get(block=True)
+            if m is not None:
+                return np.array([m[1]]).reshape(-1, 1)
+
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    def unregister(self, entity_obj):
+        pass
+
+    def build_model(self):
+        pass

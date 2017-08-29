@@ -30,44 +30,88 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-from liota.core.package_manager import LiotaPackage
-from liota.lib.utilities.utility import read_user_config
+import logging
+import os
+import sys
+import time
+import can
+from random import randint
 
-dependencies = ["edge_systems/dell5k/edge_system"]
+log = logging.getLogger(__name__)
 
+class Can:
+	'''
+		CAN implementation for LIOTA. It uses python-can internally.
+	'''
+	def __init__(self, channel=None, can_filters=None, bustype=None, listeners=None, bus=None):
+		
+		self.channel =  channel
+		self.bustype = bustype
+		self.can_filters = can_filters
+		self.listeners = listeners
 
-class PackageClass(LiotaPackage):
-    """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
-    """
+	def connect(self):
+		self.bus = can.interface.Bus(bustype=self.bustype, channel=self.channel) 
+		log.info("Connected to Can Bus")
 
-    def run(self, registry):
-        import copy
-        from liota.dccs.graphite import Graphite
-        from liota.dcc_comms.socket_comms import SocketDccComms
-        from liota.lib.utilities.offline_buffering import BufferingParams
-            
-        # Acquire resources from registry
-        # Creating a copy of system object to keep original object "clean"
-        edge_system = copy.copy(registry.get("edge_system"))
+	def send(self, arbitration_id, data, extended_id):
+		message = can.Message(arbitration_id=arbitration_id, data=data, extended_id=extended_id)  
+		try:
+			self.bus.send(message)
+			print("Message sent on {}".format(self.bus.channel_info))
+		except can.CanError:
+			print("Message not sent")
+			log.error("Message not sent over channel")
 
-        # Get values from configuration file
-        config_path = registry.get("package_conf")
-        config = read_user_config(config_path + '/sampleProp.conf')
+		
+	def recv(self, timeout):
+		return self.bus.recv(timeout=timeout)
+	
+	def set_filters(self):
+		self.bus.set_filters(self.can_filters)
+	
+	def flush_tx_buffer(self):
+		self.bus.flush_tx_buffer()
 
-        # Initialize DCC object with transport
-        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
-        self.graphite = Graphite(
-            SocketDccComms(ip=config['GraphiteIP'],
-                   port=config['GraphitePort']), buffering_params=offline_buffering
-        )
+	def send_periodic(self, data, arbitration_id, extended_id, period, duration=None):
+		'''
+		:param float period:
+			Period in seconds between each message
+		:param float duration:
+			The duration to keep sending this message at given rate. If
+			no duration is provided, the task will continue indefinitely.
 
-        # Register gateway system
-        graphite_edge_system = self.graphite.register(edge_system)
+		:return: A started task instance
+		:rtype: can.CyclicSendTaskABC
+		'''
+		message = can.Message(arbitration_id=arbitration_id, data=data, extended_id=extended_id)
+		task = can.send_periodic(message, period, duration)
+		assert isinstance(task, can.CyclicSendTaskABC)
+		return task
 
-        registry.register("graphite", self.graphite)
-        registry.register("graphite_edge_system", graphite_edge_system)
+	def shutdown(self):
+		self.bus.shutdown()
+	
+	def stop(self):
+		pass
 
-    def clean_up(self):
-        self.graphite.comms.client.close()
+class CanMessagingAttributes:
+
+	def __init__(self, pub_timestamp=0.0, arbitration_id=0, extended_id=True, is_remote_frame=False,
+				is_error_frame=False, dlc=None):
+
+		self.arbitration_id = arbitration_id
+		self.extended_id = extended_id
+
+		self.pub_timestamp = pub_timestamp
+		self.arbitration_id = arbitration_id
+		self.id_type = extended_id
+		self.is_remote_frame = is_remote_frame
+		self.is_error_frame = is_error_frame
+  
+	
+	
+
+				 
+
+	
