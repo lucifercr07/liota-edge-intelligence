@@ -65,38 +65,7 @@ class IotControlCenter(DataCenterComponent):
         elif not self.comms.identity.password:
             log.error("Password not found")
             raise ValueError("Password not found")
-        thread = threading.Thread(target=self.comms.receive)
-        thread.daemon = True
-        # This thread will continuously run in background to receive response or actions from DCC
-        thread.start()
-        self.proto = HelixProtocol(self.comms, self.comms.identity.username, self.comms.identity.password)
-        self._iotcc_json = self._create_iotcc_json()
-        self.counter = 0
-        self.recv_msg_queue = self.comms.userdata
-        self.dev_file_path = self._get_file_storage_path("dev_file_path")
-        # Liota internal entity file system path special for iotcc
-        self.entity_file_path = self._get_file_storage_path("entity_file_path")
-        self.file_ops_lock = Lock()
-        try:
-            def on_response(msg):
-                log.debug("Received msg: {0}".format(msg))
-                json_msg = json.loads(msg)
-                self.proto.on_receive(json_msg)
-                if json_msg["type"] == "connection_response":
-                    if json_msg["body"]["result"] == "succeeded":
-                        log.info("Connection verified")
-                    else:
-                        raise Exception("Helix Protocol Version mismatch")
-                else:
-                    log.debug("Processed msg: {0}".format(json_msg["type"]))
-                    on_response(self.recv_msg_queue.get(True, 300))
-
-            # Block on Queue for not more then 300 seconds else it will raise an exception
-            on_response(self.recv_msg_queue.get(True, 300))
-        except Exception as error:
-            self.comms.client.disconnect()
-            log.error("HelixProtocolException: " + repr(error))
-            raise Exception("HelixProtocolException")
+        
 
     def register(self, entity_obj):
         """ Register the objects
