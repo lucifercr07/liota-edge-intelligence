@@ -29,66 +29,42 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF     #
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
-
 import logging
-import re
-from liota.dccs.dcc import DataCenterComponent
-from liota.entities.metrics.registered_metric import RegisteredMetric
-from liota.entities.metrics.metric import Metric
-from liota.entities.registered_entity import RegisteredEntity
-from liota.edge_component.edge_component import EdgeComponent
-from liota.lib.utilities.utility import getUTCmillis
-from liota.lib.utilities.utility import systemUUID 
+from telegraf.client import TelegrafClient
+from liota.dcc_comms.dcc_comms import DCCComms
 
 log = logging.getLogger(__name__)
 
-class Wavefront(DataCenterComponent):
-    def __init__(self, comms, buffering_params, edge_component=None):
-        super(Wavefront, self).__init__(
-            comms=comms,buffering_params=buffering_params
-        )
-        self.edge_component = edge_component
-        self.comms = comms
+class TelegrafComms(DCCComms):
 
-    def register(self, entity_obj):
-        log.info("Registering resource with Wavefront DCC {0}".format(entity_obj.name))
-        if isinstance(entity_obj, Metric):
-            return RegisteredMetric(entity_obj, self, None)
-        else:
-            return RegisteredEntity(entity_obj, self, None)
+    def __init__(self, ip='localhost', port=8092):
+        self.ip = ip
+        self.port = port
+        self._connect()
 
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        reg_entity_child.parent = reg_entity_parent
+    def _connect(self):
+        log.info("Establishing Connection")
+        try:
+            self.client = TelegrafClient(host=self.ip, port=self.port)
+            log.info("Connection established")
+        except Exception as ex: 
+            log.exception("Unable to establish socket connection. Please check the firewall rules and try again.")
+            self.client = None
+            raise ex
 
-    def _format_data(self, reg_metric):
-        if isinstance(self.edge_component, EdgeComponent):
-            message = self.edge_component._format_data(reg_metric)
-            if message is not None:
-                return message
-            else:
-                return None
-        else: 
-            met_cnt = reg_metric.values.qsize()
-            message = ''
-            if met_cnt == 0:
-                return
-            for _ in range(met_cnt):
-                v = reg_metric.values.get(block=True)
-                if v is not None:
-                    name = re.split(r'\.(?!\d)', reg_metric.ref_entity.name)
-                    location = "usa"
-                    host = self.comms.client_id
-                    print "HOST:",host
-                    message += '{0},location={1},host={2} {3}={4} '.format(name[1],location,host,name[2],v[1])
-            if message == '':
-                return
-            log.info ("Publishing values to Wavefront DCC")
-            log.debug("Formatted message: {0}".format(message))
-        return message
-
-    def set_properties(self, reg_entity, properties):
+    def _disconnect(self):
         raise NotImplementedError
 
-    def unregister(self, entity_obj):
+    def send(self, message, msg_attr=None):
+        if self.client is not None:
+            message_list = message.split()
+            try:
+                print "A: ", message_list[0]
+                self.client.metric(message_list[0], message_list[1]) #first one is metric name and second arg is value.
+            except Exception as ex:
+                log.exception("Data not sent")
+                self.client = None
+
+    def receive(self):
         raise NotImplementedError
 

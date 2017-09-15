@@ -51,6 +51,7 @@ class PackageClass(LiotaPackage):
         from liota.lib.utilities.identity import Identity
         from liota.lib.utilities.tls_conf import TLSConf
         from liota.lib.utilities.offline_buffering import BufferingParams
+        from liota.lib.utilities.utility import systemUUID
             
         # Acquire resources from registry
         # Creating a copy of system object to keep original object "clean"
@@ -73,11 +74,12 @@ class PackageClass(LiotaPackage):
         #  AWSIoT broker doesn't support session persistence.  So, always use "clean_session=True"
         #  Custom Publish Topic for an EdgeSystem
         mqtt_msg_attr = MqttMessagingAttributes(pub_topic=config['CustomPubTopic'])
-
+        client_id = systemUUID().get_uuid(edge_system.name)
         self.wavefront = Wavefront(MqttDccComms(edge_system_name=edge_system.name,
                                   url=config['BrokerIP'], port=config['BrokerPort'], identity=identity,
                                   tls_conf=tls_conf,
                                   qos_details=qos_details,
+                                  client_id = client_id,
                                   clean_session=True,
                                   protocol=config['protocol'], transport=['transport'],
                                   conn_disconn_timeout=config['ConnectDisconnectTimeout'],

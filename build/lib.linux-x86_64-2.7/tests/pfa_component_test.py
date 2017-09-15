@@ -30,65 +30,41 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
-import logging
-import re
-from liota.dccs.dcc import DataCenterComponent
-from liota.entities.metrics.registered_metric import RegisteredMetric
-from liota.entities.metrics.metric import Metric
-from liota.entities.registered_entity import RegisteredEntity
-from liota.edge_component.edge_component import EdgeComponent
-from liota.lib.utilities.utility import getUTCmillis
-from liota.lib.utilities.utility import systemUUID 
+import unittest
+from liota.edge_component.pfa_component import PFAComponent
+from mock import patch
 
-log = logging.getLogger(__name__)
+def action_actuator():
+	pass
 
-class Wavefront(DataCenterComponent):
-    def __init__(self, comms, buffering_params, edge_component=None):
-        super(Wavefront, self).__init__(
-            comms=comms,buffering_params=buffering_params
-        )
-        self.edge_component = edge_component
-        self.comms = comms
+ModelPath = "/home/prasha/git_repo/liota_edge_intelligence/edge_intelligence_models/windmill-model/finalized_model.pfa"
 
-    def register(self, entity_obj):
-        log.info("Registering resource with Wavefront DCC {0}".format(entity_obj.name))
-        if isinstance(entity_obj, Metric):
-            return RegisteredMetric(entity_obj, self, None)
-        else:
-            return RegisteredEntity(entity_obj, self, None)
+class TestPFAComponent(unittest.TestCase):
+	
+	def test_PFAComponent_fails_without_valid_ModelPath(self):
+		with self.assertRaises(Exception):
+			edge_component = PFAComponent("/home/asd", "asd")
+			assertNotIsInstance(edge_component, PFAComponent)
 
-    def create_relationship(self, reg_entity_parent, reg_entity_child):
-        reg_entity_child.parent = reg_entity_parent
+	def test_PFAComponent_fails_without_valid_ModelPath(self):
+		with self.assertRaises(Exception):
+			edge_component = PFAComponent(ModelPath, "asd")
+			assert isinstance(edge_component, PFAComponent)
+		
+	def test_PFAComponent_fails_without_valid_actionActuator(self):
+		#Fails if action_actuator not of function type
+		with self.assertRaises(Exception):
+			edge_component = PFAComponent(ModelPath, "asd")
+			assertNotIsInstance(edge_component, PFAComponent)
 
-    def _format_data(self, reg_metric):
-        if isinstance(self.edge_component, EdgeComponent):
-            message = self.edge_component._format_data(reg_metric)
-            if message is not None:
-                return message
-            else:
-                return None
-        else: 
-            met_cnt = reg_metric.values.qsize()
-            message = ''
-            if met_cnt == 0:
-                return
-            for _ in range(met_cnt):
-                v = reg_metric.values.get(block=True)
-                if v is not None:
-                    name = re.split(r'\.(?!\d)', reg_metric.ref_entity.name)
-                    location = "usa"
-                    host = self.comms.client_id
-                    print "HOST:",host
-                    message += '{0},location={1},host={2} {3}={4} '.format(name[1],location,host,name[2],v[1])
-            if message == '':
-                return
-            log.info ("Publishing values to Wavefront DCC")
-            log.debug("Formatted message: {0}".format(message))
-        return message
-
-    def set_properties(self, reg_entity, properties):
-        raise NotImplementedError
-
-    def unregister(self, entity_obj):
-        raise NotImplementedError
-
+	def test_PFAComponent_takes_valid_actionActuator(self):
+		edge_component = PFAComponent(ModelPath, action_actuator)
+		assert isinstance(edge_component, PFAComponent)
+'''
+	def test_PFAComponent_actionActuator_called(self, mock):
+		edge_component = RuleEdgeComponent(ModelPath, action_actuator)
+		edge_component.process(message)
+		self.assertTrue(mock.called)
+'''
+if __name__ == '__main__':
+	unittest.main()
