@@ -49,6 +49,7 @@ class Wavefront(DataCenterComponent):
         )
         self.edge_component = edge_component
         self.comms = comms
+        print "HOST:",self.comms.client_id
 
     def register(self, entity_obj):
         log.info("Registering resource with Wavefront DCC {0}".format(entity_obj.name))
@@ -78,7 +79,6 @@ class Wavefront(DataCenterComponent):
                     name = re.split(r'\.(?!\d)', reg_metric.ref_entity.name)
                     location = "usa"
                     host = self.comms.client_id
-                    print "HOST:",host
                     message += '{0},location={1},host={2} {3}={4} '.format(name[1],location,host,name[2],v[1])
             if message == '':
                 return
