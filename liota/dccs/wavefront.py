@@ -49,6 +49,7 @@ class Wavefront(DataCenterComponent):
         )
         self.edge_component = edge_component
         self.comms = comms
+        self.host = self.comms.client_id
         print self.comms.client_id
 
     def register(self, entity_obj):
@@ -78,7 +79,7 @@ class Wavefront(DataCenterComponent):
                 if v is not None:
                     name = re.split(r'\.(?!\d)', reg_metric.ref_entity.name)
                     location = "usa"
-                    host = self.comms.client_id
+                    host = self.host
                     message += '{0},location={1},host={2} {3}={4} '.format(name[1],location,host,name[2],v[1])
             if message == '':
                 return
