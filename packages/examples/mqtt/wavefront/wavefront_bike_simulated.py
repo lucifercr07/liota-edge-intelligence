@@ -141,12 +141,15 @@ class PackageClass(LiotaPackage):
     def run(self, registry):
         from liota.entities.metrics.metric import Metric
         from liota.lib.transports.mqtt import MqttMessagingAttributes
+        import copy
 
         # Acquire resources from registry
+        wavefront_edge_system = copy.copy(registry.get("wavefront_edge_system"))
         wavefront = registry.get("wavefront")
         bike_simulator = registry.get("bike_simulator")
         wavefront_bike = wavefront.register(bike_simulator)
 
+        wavefront.create_relationship(wavefront_edge_system, wavefront_bike)
 
         config_path = registry.get("package_conf")
         config = read_user_config(config_path + '/sampleProp.conf')
@@ -157,7 +160,7 @@ class PackageClass(LiotaPackage):
         # Create metrics
         self.metrics = []
 
-        metric_name = "prasha.bike.speed"
+        metric_name = "speed"
         bike_speed = Metric(
             name=metric_name,
             unit=(ureg.m / ureg.sec),
@@ -170,7 +173,7 @@ class PackageClass(LiotaPackage):
         reg_bike_speed.start_collecting()
         self.metrics.append(reg_bike_speed)
 
-        metric_name = "prasha.bike.power"
+        metric_name = "power"
         bike_power = Metric(
             name=metric_name,
             unit=ureg.watt,

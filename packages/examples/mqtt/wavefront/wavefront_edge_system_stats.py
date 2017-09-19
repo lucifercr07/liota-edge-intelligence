@@ -88,7 +88,7 @@ class PackageClass(LiotaPackage):
 
         # Create metrics
         self.metrics = []
-        metric_name = "prasha.CPU.Utilization"
+        metric_name = "CPU_Utilization"
         metric_cpu_utilization = Metric(name=metric_name,
                                         unit=None, 
                                         interval=2,
@@ -101,7 +101,7 @@ class PackageClass(LiotaPackage):
         reg_metric_cpu_utilization.start_collecting()
         self.metrics.append(reg_metric_cpu_utilization)
 
-        metric_name = "prasha.CPU.Process"
+        metric_name = "CPU_Process"
         metric_cpu_procs = Metric(name=metric_name,
                                   unit=None, 
                                   interval=2,
@@ -114,7 +114,7 @@ class PackageClass(LiotaPackage):
         reg_metric_cpu_procs.start_collecting()
         self.metrics.append(reg_metric_cpu_procs)
 
-        metric_name = "prasha.Disk.Usage_Stats"
+        metric_name = "Disk_Usage_Stats"
         metric_disk_usage_stats = Metric(name=metric_name,
                                          unit=None, 
                                          interval=2,
@@ -127,7 +127,7 @@ class PackageClass(LiotaPackage):
         reg_metric_disk_usage_stats.start_collecting()
         self.metrics.append(reg_metric_disk_usage_stats)
 
-        metric_name = "prasha.Network.Bytes_Received"
+        metric_name = "Network_Bytes_Received"
         metric_network_bytes_received = Metric(name=metric_name,
                                                unit=None, 
                                                interval=2,

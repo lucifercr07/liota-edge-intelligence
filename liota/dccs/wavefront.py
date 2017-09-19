@@ -31,13 +31,13 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-import re
 from liota.dccs.dcc import DataCenterComponent
 from liota.entities.metrics.registered_metric import RegisteredMetric
 from liota.entities.metrics.metric import Metric
 from liota.entities.registered_entity import RegisteredEntity
 from liota.edge_component.edge_component import EdgeComponent
 from liota.lib.utilities.utility import getUTCmillis
+import datetime
 from liota.lib.utilities.utility import systemUUID 
 
 log = logging.getLogger(__name__)
@@ -49,17 +49,18 @@ class Wavefront(DataCenterComponent):
         )
         self.edge_component = edge_component
         self.comms = comms
-        self.host = self.comms.client_id
-        print self.comms.client_id
+        self.check = True
 
     def register(self, entity_obj):
         log.info("Registering resource with Wavefront DCC {0}".format(entity_obj.name))
         if isinstance(entity_obj, Metric):
             return RegisteredMetric(entity_obj, self, None)
         else:
-            return RegisteredEntity(entity_obj, self, None)
+          	return RegisteredEntity(entity_obj, self, None)
 
     def create_relationship(self, reg_entity_parent, reg_entity_child):
+        #print "parent: ",reg_entity_parent.ref_entity.name,reg_entity_parent.ref_entity.entity_id
+        #print "child: ",reg_entity_child.ref_entity.name,reg_entity_child.ref_entity.entity_id
         reg_entity_child.parent = reg_entity_parent
 
     def _format_data(self, reg_metric):
@@ -72,15 +73,26 @@ class Wavefront(DataCenterComponent):
         else: 
             met_cnt = reg_metric.values.qsize()
             message = ''
+            host = ''
+            device_name = ''
+            metric_name = ''
             if met_cnt == 0:
                 return
             for _ in range(met_cnt):
                 v = reg_metric.values.get(block=True)
                 if v is not None:
-                    name = re.split(r'\.(?!\d)', reg_metric.ref_entity.name)
-                    location = "usa"
-                    host = self.host
-                    message += '{0},location={1},host={2} {3}={4} '.format(name[1],location,host,name[2],v[1])
+                    device_name = (reg_metric.parent).ref_entity.name
+                    metric_name = reg_metric.ref_entity.name
+                    if (reg_metric.parent).parent:
+                    	host = (reg_metric.parent).parent.ref_entity.entity_id+"."+(reg_metric.parent).ref_entity.entity_id
+                    else:
+                    	host = (reg_metric.parent).ref_entity.entity_id #if device is not available, only gateway uuid
+                    if self.check:
+	                    print "Device name: ",device_name
+	                    print "Metric name: ",metric_name
+	                    print "Host name: ",host
+	                    self.check = False
+                    message += '{0},host={1} {2}={3} {4}'.format(device_name,host,metric_name,v[1],datetime.datetime.utcnow().isoformat())
             if message == '':
                 return
             log.info ("Publishing values to Wavefront DCC")
