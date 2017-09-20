@@ -75,9 +75,9 @@ class PackageClass(LiotaPackage):
         self.metrics = []
 
         mem_free_metric = Metric(
-            name="Memory_Free",
+            name="memory_free",
             unit=None,
-            interval=10,
+            interval=2,
             sampling_function=read_mem_free
         )
         reg_mem_free_metric = self.wavefront.register(mem_free_metric)

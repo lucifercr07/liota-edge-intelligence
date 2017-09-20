@@ -70,10 +70,7 @@ class PackageClass(LiotaPackage):
         # Encapsulate QoS related parameters
         qos_details = QoSDetails(config['in_flight'], config['queue_size'], config['retry'])
 
-        #  Connecting to AWSIoT
-        #  AWSIoT broker doesn't support session persistence.  So, always use "clean_session=True"
-        #  Custom Publish Topic for an EdgeSystem
-        mqtt_msg_attr = MqttMessagingAttributes(pub_topic=config['CustomPubTopic'])
+        #  Connecting to emqtt broker
         client_id = systemUUID().get_uuid(edge_system.name)
         self.wavefront = Wavefront(MqttDccComms(edge_system_name=edge_system.name,
                                   url=config['BrokerIP'], port=config['BrokerPort'], identity=identity,
@@ -82,8 +79,7 @@ class PackageClass(LiotaPackage):
                                   client_id = client_id,
                                   clean_session=True,
                                   protocol=config['protocol'], transport=['transport'],
-                                  conn_disconn_timeout=config['ConnectDisconnectTimeout'],
-                                  mqtt_msg_attr=mqtt_msg_attr), buffering_params=offline_buffering)
+                                  conn_disconn_timeout=config['ConnectDisconnectTimeout']), buffering_params=offline_buffering)
 
         # Register gateway system
         wavefront_edge_system = self.wavefront.register(edge_system)

@@ -169,7 +169,6 @@ class PackageClass(LiotaPackage):
         )
         reg_bike_speed = wavefront.register(bike_speed)
         wavefront.create_relationship(wavefront_bike, reg_bike_speed)
-        reg_bike_speed.msg_attr = MqttMessagingAttributes(pub_topic=config['BikeSpeed'])
         reg_bike_speed.start_collecting()
         self.metrics.append(reg_bike_speed)
 
@@ -182,7 +181,6 @@ class PackageClass(LiotaPackage):
         )
         reg_bike_power = wavefront.register(bike_power)
         wavefront.create_relationship(wavefront_bike, reg_bike_power)
-        reg_bike_power.msg_attr = MqttMessagingAttributes(pub_topic=config['BikePower'])
         reg_bike_power.start_collecting()
         self.metrics.append(reg_bike_power)
 
