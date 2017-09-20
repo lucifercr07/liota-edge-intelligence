@@ -97,7 +97,6 @@ class PackageClass(LiotaPackage):
                                         )
         reg_metric_cpu_utilization = wavefront.register(metric_cpu_utilization)
         wavefront.create_relationship(wavefront_edge_system, reg_metric_cpu_utilization)
-        reg_metric_cpu_utilization.msg_attr = MqttMessagingAttributes(pub_topic=config['CPUutilization'])
         reg_metric_cpu_utilization.start_collecting()
         self.metrics.append(reg_metric_cpu_utilization)
 
@@ -110,7 +109,6 @@ class PackageClass(LiotaPackage):
                                   )
         reg_metric_cpu_procs = wavefront.register(metric_cpu_procs)
         wavefront.create_relationship(wavefront_edge_system, reg_metric_cpu_procs)
-        reg_metric_cpu_procs.msg_attr = MqttMessagingAttributes(pub_topic=config['CPUprocess'])
         reg_metric_cpu_procs.start_collecting()
         self.metrics.append(reg_metric_cpu_procs)
 
@@ -123,7 +121,6 @@ class PackageClass(LiotaPackage):
                                          )
         reg_metric_disk_usage_stats = wavefront.register(metric_disk_usage_stats)
         wavefront.create_relationship(wavefront_edge_system, reg_metric_disk_usage_stats)
-        reg_metric_disk_usage_stats.msg_attr = MqttMessagingAttributes(pub_topic=config['Diskusagestats'])
         reg_metric_disk_usage_stats.start_collecting()
         self.metrics.append(reg_metric_disk_usage_stats)
 
@@ -136,7 +133,6 @@ class PackageClass(LiotaPackage):
                                                )
         reg_metric_network_bytes_received = wavefront.register(metric_network_bytes_received)
         wavefront.create_relationship(wavefront_edge_system, reg_metric_network_bytes_received)
-        reg_metric_network_bytes_received.msg_attr = MqttMessagingAttributes(pub_topic=config['Networkbytesreceived'])
         reg_metric_network_bytes_received.start_collecting()
         self.metrics.append(reg_metric_network_bytes_received)
 
