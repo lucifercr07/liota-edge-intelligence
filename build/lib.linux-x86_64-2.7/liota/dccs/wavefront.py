@@ -85,10 +85,10 @@ class Wavefront(DataCenterComponent):
 					else:
 						host = (reg_metric.parent).ref_entity.entity_id #if device is not available, only gateway uuid
 					
-					metric_unit = str(reg_metric.ref_entity.unit)
-					metric_unit = ''.join(metric_unit.split())
+					x = str(reg_metric.ref_entity.unit)
+					x = ''.join(x.split())
 					message += '{0},unit={5},host={1} {2}={3} {4}'.format(device_name,host,metric_name,v[1],
-															v[0]*1000000,metric_unit)
+															v[0]*1000000,x)
 					if self.check:
 						print "Device name: ",device_name
 						print "Metric name: ",metric_name

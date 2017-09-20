@@ -31,80 +31,85 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-from liota.dccs.dcc import DataCenterComponent
-from liota.entities.metrics.registered_metric import RegisteredMetric
-from liota.entities.metrics.metric import Metric
-from liota.entities.registered_entity import RegisteredEntity
+import numpy as np
 from liota.edge_component.edge_component import EdgeComponent
+from liota.entities.registered_entity import RegisteredEntity
+from liota.entities.edge_systems.edge_system import EdgeSystem
+from liota.entities.devices.device import Device
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+import types
 
 log = logging.getLogger(__name__)
 
-class Wavefront(DataCenterComponent):
-	def __init__(self, comms, buffering_params, edge_component=None):
-		super(Wavefront, self).__init__(
-			comms=comms,buffering_params=buffering_params
-		)
-		self.edge_component = edge_component
-		self.comms = comms
-		self.check = True
+class RuleEdgeComponent(EdgeComponent):
+	def __init__(self, model_rule, exceed_limit_consecutive, actuator_udm):
+		if model_rule is None:
+			raise TypeError("Model rule must be specified.")
+
+		if not isinstance(model_rule, types.LambdaType):
+			raise TypeError("Model rule must be a lambda function.")
+
+		if model_rule.__name__ != "<lambda>":
+			raise TypeError("Model rule must be a lambda function.")			
+
+		if type(exceed_limit_consecutive) is not int:
+			raise ValueError("exceed_limit should be a integer value.")
+
+		if not isinstance(actuator_udm, types.FunctionType):
+			raise TypeError("Model rule must be a function.")
+
+		self.model_rule = model_rule
+		self.actuator_udm = actuator_udm
+		self.exceed_limit = exceed_limit_consecutive
+		self.counter = 0
 
 	def register(self, entity_obj):
-		log.info("Registering resource with Wavefront DCC {0}".format(entity_obj.name))
 		if isinstance(entity_obj, Metric):
 			return RegisteredMetric(entity_obj, self, None)
 		else:
 			return RegisteredEntity(entity_obj, self, None)
 
 	def create_relationship(self, reg_entity_parent, reg_entity_child):
-		#print "parent: ",reg_entity_parent.ref_entity.name,reg_entity_parent.ref_entity.entity_id
-		#print "child: ",reg_entity_child.ref_entity.name,reg_entity_child.ref_entity.entity_id
-		reg_entity_child.parent = reg_entity_parent
+		pass 	
+
+	def process(self, message):
+		result = self.model_rule(*message)
+		self.counter = 0 if(result==0) else self.counter+1
+		if(self.counter>=self.exceed_limit):
+			self.actuator_udm(1)
+			self.counter=0
+		else:
+			self.actuator_udm(0)
+
 
 	def _format_data(self, reg_metric):
-		if isinstance(self.edge_component, EdgeComponent):
-			message = self.edge_component._format_data(reg_metric)
-			if message is not None:
-				return message
-			else:
-				return None
-		else: 
-			met_cnt = reg_metric.values.qsize()
-			message = ''
-			host = ''
-			device_name = ''
-			metric_name = ''
-			if met_cnt == 0:
-				return
-			for _ in range(met_cnt):
-				v = reg_metric.values.get(block=True)
-				if v is not None:
-					device_name = (reg_metric.parent).ref_entity.name
-					metric_name = reg_metric.ref_entity.name
-					if (reg_metric.parent).parent:
-						host = (reg_metric.parent).parent.ref_entity.entity_id+"."+(reg_metric.parent).ref_entity.entity_id
-					else:
-						host = (reg_metric.parent).ref_entity.entity_id #if device is not available, only gateway uuid
-					
-					metric_unit = str(reg_metric.ref_entity.unit)
-					metric_unit = ''.join(metric_unit.split())
-					message += '{0},unit={5},host={1} {2}={3} {4}'.format(device_name,host,metric_name,v[1],
-															v[0]*1000000,metric_unit)
-					if self.check:
-						print "Device name: ",device_name
-						print "Metric name: ",metric_name
-						print "Host name: ",host
-						print "Message: ",message
-						self.check = False
+		met_cnt = reg_metric.values.qsize()
+		metric = []
+		if met_cnt == 0:
+			return
+		if met_cnt == 1:
+			print "HI: ", reg_metric.ref_entity.name
+			m = reg_metric.values.get(block=True)
+			metric.append(m[1])
+		else:
+			while met_cnt !=0:
+				m = reg_metric.values.get(block=True)
+				if m is not None:
+					metric.append(m)
+				met_cnt-=1
+		return metric	
 
-			if message == '':
-				return
-			log.info ("Publishing values to Wavefront DCC")
-			log.debug("Formatted message: {0}".format(message))
-		return message
+	def build_model(self):
+		pass	
+
+	def load_model(self):
+		pass
 
 	def set_properties(self, reg_entity, properties):
-		raise NotImplementedError
+		pass
 
-	def unregister(self, entity_obj):
-		raise NotImplementedError
+	def unregister(self):
+		pass
+
 

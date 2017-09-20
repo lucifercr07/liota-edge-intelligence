@@ -31,80 +31,56 @@
 # ----------------------------------------------------------------------------#
 
 import logging
-from liota.dccs.dcc import DataCenterComponent
-from liota.entities.metrics.registered_metric import RegisteredMetric
-from liota.entities.metrics.metric import Metric
-from liota.entities.registered_entity import RegisteredEntity
+
 from liota.edge_component.edge_component import EdgeComponent
+import csv
+from liota.entities.metrics.metric import Metric
+from liota.entities.metrics.registered_metric import RegisteredMetric
+from liota.entities.registered_entity import RegisteredEntity
+import titus.prettypfa
+import json
+from titus.genpy import PFAEngine
 
 log = logging.getLogger(__name__)
 
-class Wavefront(DataCenterComponent):
-	def __init__(self, comms, buffering_params, edge_component=None):
-		super(Wavefront, self).__init__(
-			comms=comms,buffering_params=buffering_params
-		)
-		self.edge_component = edge_component
-		self.comms = comms
-		self.check = True
 
-	def register(self, entity_obj):
-		log.info("Registering resource with Wavefront DCC {0}".format(entity_obj.name))
-		if isinstance(entity_obj, Metric):
-			return RegisteredMetric(entity_obj, self, None)
-		else:
-			return RegisteredEntity(entity_obj, self, None)
+class PFAComponent(EdgeComponent):
 
-	def create_relationship(self, reg_entity_parent, reg_entity_child):
-		#print "parent: ",reg_entity_parent.ref_entity.name,reg_entity_parent.ref_entity.entity_id
-		#print "child: ",reg_entity_child.ref_entity.name,reg_entity_child.ref_entity.entity_id
-		reg_entity_child.parent = reg_entity_parent
+    def __init__(self, model_path, actuator_udm):
+        super(PFAComponent, self).__init__(model_path, actuator_udm)
+        self.model = None
+        self.load_model()
 
-	def _format_data(self, reg_metric):
-		if isinstance(self.edge_component, EdgeComponent):
-			message = self.edge_component._format_data(reg_metric)
-			if message is not None:
-				return message
-			else:
-				return None
-		else: 
-			met_cnt = reg_metric.values.qsize()
-			message = ''
-			host = ''
-			device_name = ''
-			metric_name = ''
-			if met_cnt == 0:
-				return
-			for _ in range(met_cnt):
-				v = reg_metric.values.get(block=True)
-				if v is not None:
-					device_name = (reg_metric.parent).ref_entity.name
-					metric_name = reg_metric.ref_entity.name
-					if (reg_metric.parent).parent:
-						host = (reg_metric.parent).parent.ref_entity.entity_id+"."+(reg_metric.parent).ref_entity.entity_id
-					else:
-						host = (reg_metric.parent).ref_entity.entity_id #if device is not available, only gateway uuid
-					
-					metric_unit = str(reg_metric.ref_entity.unit)
-					metric_unit = ''.join(metric_unit.split())
-					message += '{0},unit={5},host={1} {2}={3} {4}'.format(device_name,host,metric_name,v[1],
-															v[0]*1000000,metric_unit)
-					if self.check:
-						print "Device name: ",device_name
-						print "Metric name: ",metric_name
-						print "Host name: ",host
-						print "Message: ",message
-						self.check = False
+    def load_model(self):
+        log.info("Loading model..")
+        self.model, = PFAEngine.fromJson(json.load(open(self.model_path)))
 
-			if message == '':
-				return
-			log.info ("Publishing values to Wavefront DCC")
-			log.debug("Formatted message: {0}".format(message))
-		return message
+    def register(self, entity_obj):
+        if isinstance(entity_obj, Metric):
+            return RegisteredMetric(entity_obj, self, None)
+        else:
+            return RegisteredEntity(entity_obj, self, None)
 
-	def set_properties(self, reg_entity, properties):
-		raise NotImplementedError
+    def create_relationship(self, reg_entity_parent, reg_entity_child):
+        pass
 
-	def unregister(self, entity_obj):
-		raise NotImplementedError
+    def process(self,message):
+        self.actuator_udm(self.model.action(message))
 
+    def _format_data(self, reg_metric):
+        met_cnt = reg_metric.values.qsize()
+        if met_cnt == 0:
+            return
+        for _ in range(met_cnt):
+            m = reg_metric.values.get(block=True)
+            if m is not None:
+                return m[1]
+
+    def set_properties(self, reg_entity, properties):
+        pass
+
+    def unregister(self, entity_obj):
+        pass
+
+    def build_model(self):
+        pass
