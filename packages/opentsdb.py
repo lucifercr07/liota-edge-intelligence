@@ -38,18 +38,15 @@ dependencies = ["edge_systems/dell5k/edge_system"]
 
 class PackageClass(LiotaPackage):
     """
-    This package creates a Graphite DCC object and registers system on
-    Graphite to acquire "registered edge system", i.e. graphite_edge_system.
+    This package creates a opentsdb DCC object and registers system on
+    opentsdb to acquire "registered edge system", i.e. opentsdb_edge_system.
     """
 
     def run(self, registry):
         import copy
-        from liota.dccs.influx import influx
-        from liota.dcc_comms.mqtt_dcc_comms import MqttDccComms
-        from liota.lib.transports.mqtt import MqttMessagingAttributes
-        from liota.lib.transports.mqtt import QoSDetails
-        from liota.lib.utilities.identity import Identity
-        from liota.lib.utilities.tls_conf import TLSConf
+        from liota.dccs.opentsdb import opentsdb
+        from liota.dcc_comms.socket_comms import SocketDccComms
+        from liota.lib.utilities.offline_buffering import BufferingParams
             
         # Acquire resources from registry
         # Creating a copy of system object to keep original object "clean"
@@ -60,27 +57,17 @@ class PackageClass(LiotaPackage):
         config = read_user_config(config_path + '/sampleProp.conf')
 
         # Initialize DCC object with transport
-        identity = Identity(root_ca_cert=config['broker_root_ca_cert'], username=config['broker_username'], password=['broker_password'],
-                        cert_file=None, key_file=None)
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(config['cert_required'], config['tls_version'], config['cipher'])
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['in_flight'], config['queue_size'], config['retry'])
-
-        # Connecting to emqtt broker
-        self.influx = influx(MqttDccComms(edge_system_name=edge_system.name,
-                                  url=config['BrokerIP'], port=config['BrokerPort'], identity=identity,
-                                  tls_conf=tls_conf,
-                                  qos_details=qos_details,
-                                  clean_session=True,
-                                  protocol=config['protocol'], transport=['transport'],
-                                  conn_disconn_timeout=config['ConnectDisconnectTimeout']))
+        offline_buffering = BufferingParams(persistent_storage=True, queue_size=-1, data_drain_size=10, draining_frequency=1)
+        self.opentsdb = opentsdb(
+            SocketDccComms(ip=config['opentsdbIP'],
+                   port=config['opentsdbPort']), buffering_params=offline_buffering
+        )
 
         # Register gateway system
-        influx_edge_system = self.influx.register(edge_system)
+        opentsdb_edge_system = self.opentsdb.register(edge_system)
 
-        registry.register("influx", self.influx)
-        registry.register("influx_edge_system", influx_edge_system)
+        registry.register("opentsdb", self.opentsdb)
+        registry.register("opentsdb_edge_system", opentsdb_edge_system)
 
     def clean_up(self):
-        self.influx.comms.client = None
+        self.opentsdb.comms.client.close()

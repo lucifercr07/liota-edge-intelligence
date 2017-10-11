@@ -1,0 +1,8 @@
+[Unit]
+Description=Liota
+
+[Service]
+ExecStart=/etc/liota/packages/liotad.py
+
+[Install]
+WantedBy=multi-user.target

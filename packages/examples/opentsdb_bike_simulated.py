@@ -32,7 +32,7 @@
 
 from liota.core.package_manager import LiotaPackage
 
-dependencies = ["influx", "examples/bike_simulator"]
+dependencies = ["opentsdb", "examples/bike_simulator"]
 
 
 def static_vars(**kwargs):
@@ -141,9 +141,9 @@ class PackageClass(LiotaPackage):
         from liota.entities.metrics.metric import Metric
 
         # Acquire resources from registry
-        influx = registry.get("influx")
+        opentsdb = registry.get("opentsdb")
         bike_simulator = registry.get("bike_simulator")
-        influx_bike = influx.register(bike_simulator)
+        opentsdb_bike = opentsdb.register(bike_simulator)
 
         ureg = bike_simulator.ureg
         self.create_udm(bike_model=bike_simulator)
@@ -155,11 +155,11 @@ class PackageClass(LiotaPackage):
         bike_speed = Metric(
             name=metric_name,
             unit=(ureg.m / ureg.sec),
-            interval=2,
+            interval=5,
             sampling_function=self.get_bike_speed
         )
-        reg_bike_speed = influx.register(bike_speed)
-        influx.create_relationship(influx_bike, reg_bike_speed)
+        reg_bike_speed = opentsdb.register(bike_speed)
+        opentsdb.create_relationship(opentsdb_bike, reg_bike_speed)
         reg_bike_speed.start_collecting()
         self.metrics.append(reg_bike_speed)
 
@@ -167,11 +167,11 @@ class PackageClass(LiotaPackage):
         bike_power = Metric(
             name=metric_name,
             unit=ureg.watt,
-            interval=2,
+            interval=5,
             sampling_function=self.get_bike_power
         )
-        reg_bike_power = influx.register(bike_power)
-        influx.create_relationship(influx_bike, reg_bike_power)
+        reg_bike_power = opentsdb.register(bike_power)
+        opentsdb.create_relationship(opentsdb_bike, reg_bike_power)
         reg_bike_power.start_collecting()
         self.metrics.append(reg_bike_power)
 
