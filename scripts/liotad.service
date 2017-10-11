@@ -2,7 +2,9 @@
 Description=Liota
 
 [Service]
+User=root
 ExecStart=/etc/liota/packages/liotad.py
 
 [Install]
 WantedBy=multi-user.target
+
